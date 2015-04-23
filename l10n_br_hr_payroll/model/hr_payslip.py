@@ -1,8 +1,8 @@
 # -*- encoding: utf-8 -*-
 ##############################################################################
 #
-# Brazillian Human Resources Payroll module for OpenERP
-#    Copyright (C) 2014 KMEE (http://www.kmee.com.br)
+#    Brazillian Human Resources Payroll module for OpenERP
+#    Copyright (C) 2015 KMEE (http://www.kmee.com.br)
 #    @author Rodolfo Bertozo - rodolfo.bertozo@kmee.com.br
 #
 #    This program is free software: you can redistribute it and/or modify
