@@ -79,14 +79,17 @@ class HrContract(orm.Model):
         res = {}
     
         obj_worked_days = self.pool.get('hr.payslip.worked_days')
-        worked_ids =  obj_worked_days.search(cr, uid, [('contract_id', '=', ids[0])])
+        payslip_id = context['payslip_id']
+        worked_ids = obj_worked_days.search(
+            cr, uid, [('contract_id', '=', ids[0]),
+                      ('payslip_id', '=', payslip_id),
+                      ('code', 'like', 'WORK100')])
         if worked_ids:
             worked = obj_worked_days.browse(cr, uid, worked_ids[0])
             res[ids[0]] = worked.number_of_days
-            return res
         else:
             res[ids[0]] = 0
-            return res
+        return res
     
     def _check_date(self, cr, uid, ids, fields, arg, context=None):
         res = {}
@@ -135,13 +138,3 @@ class HrContract(orm.Model):
         'value_va' : 0, 
         'value_vr' : 0  
     }
-
-
-    
-
-    
-     
-
-   
-    
-
