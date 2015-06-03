@@ -2,9 +2,8 @@
 ##############################################################################
 #
 #    Brazillian Human Resources Payroll module for OpenERP
-#    Copyright (C) 2014 KMEE (http://www.kmee.com.br)
-#    @author Luis Felipe Mileo <mileo@kmee.com.br>
-#    @author Matheus Lima Felix <matheus.felix@kmee.com.br>
+#    Copyright (C) 2015 KMEE (http://www.kmee.com.br)
+#    @author Rodolfo Bertozo - rodolfo.bertozo@kmee.com.br
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU Affero General Public License as
@@ -20,10 +19,14 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+from openerp.osv import orm, osv
 
-from . import l10n_br_hr_cbo
-from . import hr_employee
-from . import hr_job
-from . import hr_contract
-from . import res_company
 
+class HrPayslip(orm.Model):
+    _inherit = 'hr.payslip'
+
+    def compute_sheet(self, cr, uid, ids, context=None):
+        obj = self.browse(cr, uid, ids)[0]
+        context['payslip_id'] = obj.id
+        super(HrPayslip, self).compute_sheet(cr, uid, ids, context)
+        return True
