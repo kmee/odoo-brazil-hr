@@ -19,3 +19,10 @@ class HrSalaryRule(models.Model):
     compoe_base_FGTS = fields.Boolean(
         string=u'Compõe Base FGTS'
     )
+    tipo_media = fields.Selection(
+        selection=[
+                ('valor', 'Valor'),
+                ('quantidade', 'Quantidade'),
+            ],
+        string='Tipo de Média da Rubrica',
+    )
