@@ -21,8 +21,8 @@ class HrSalaryRule(models.Model):
     )
     tipo_media = fields.Selection(
         selection=[
-                ('valor', 'Valor'),
-                ('quantidade', 'Quantidade'),
-            ],
+            ('valor', 'Valor'),
+            ('quantidade', 'Quantidade'),
+        ],
         string='Tipo de Média da Rubrica',
     )
