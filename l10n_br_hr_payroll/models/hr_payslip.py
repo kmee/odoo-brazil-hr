@@ -2,10 +2,16 @@
 # Copyright (C) 2016 KMEE (http://www.kmee.com.br)
 # License AGPL-3 - See http://www.gnu.org/licenses/agpl-3.0.html
 
+import logging
 from openerp import api, fields, models, exceptions, _
 from datetime import datetime
-from pybrasil.valor import formata_valor
-from pybrasil.data import formata_data
+
+_logger = logging.getLogger(__name__)
+
+try:
+    from pybrasil import valor, data
+except ImportError:
+    _logger.info('Cannot import pybrasil')
 
 MES_DO_ANO = [
     (1, u'Jan'),
@@ -47,21 +53,34 @@ class HrPayslip(models.Model):
         fgts = 0.00
         inss = 0.00
         irpf = 0.00
+        codigo = {}
+        codigo['BASE_FGTS'] = \
+            self.env.ref('l10n_br_hr_payroll.hr_salary_rule_BASE_FGTS').code
+        codigo['BASE_INSS'] = \
+            self.env.ref('l10n_br_hr_payroll.hr_salary_rule_BASE_INSS').code
+        codigo['BASE_IRPF'] = \
+            self.env.ref('l10n_br_hr_payroll.hr_salary_rule_BASE_IRPF').code
+        codigo['FGTS'] = \
+            self.env.ref('l10n_br_hr_payroll.hr_salary_rule_FGTS').code
+        codigo['INSS'] = \
+            self.env.ref('l10n_br_hr_payroll.hr_salary_rule_INSS').code
+        codigo['IRPF'] = \
+            self.env.ref('l10n_br_hr_payroll.hr_salary_rule_IRPF').code
         for line in self.line_ids:
             total += line.valor_provento - line.valor_deducao
             total_proventos += line.valor_provento
             total_descontos += line.valor_deducao
-            if self.env.ref('l10n_br_hr_payroll.hr_salary_rule_BASE_FGTS').code:
+            if codigo['BASE_FGTS']:
                 base_fgts = line.total
-            elif self.env.ref('l10n_br_hr_payroll.hr_salary_rule_BASE_INSS').code:
+            elif codigo['BASE_INSS']:
                 base_inss = line.total
-            elif self.env.ref('l10n_br_hr_payroll.hr_salary_rule_BASE_IRPF').code:
+            elif codigo('BASE_IRPF'):
                 base_irpf = line.total
-            elif self.env.ref('l10n_br_hr_payroll.hr_salary_rule_FGTS').code:
+            elif codigo['FGTS']:
                 fgts = line.total
-            elif self.env.ref('l10n_br_hr_payroll.hr_salary_rule_INSS').code:
+            elif codigo['INSS']:
                 inss = line.total
-            elif self.env.ref('l10n_br_hr_payroll.hr_salary_rule_IRPF').code:
+            elif codigo['IRPF']:
                 irpf = line.total
         self.total_folha = total
         self.total_proventos = total_proventos
@@ -73,17 +92,17 @@ class HrPayslip(models.Model):
         self.inss = inss
         self.irpf = irpf
         # Formato
-        self.data_admissao_fmt = formata_data(self.contract_id.date_start)
-        self.salario_base_fmt = formata_valor(self.contract_id.wage)
-        self.total_folha_fmt = formata_valor(self.total_folha)
-        self.total_proventos_fmt = formata_valor(self.total_proventos)
-        self.total_descontos_fmt = formata_valor(self.total_descontos)
-        self.base_fgts_fmt = formata_valor(self.base_fgts)
-        self.base_inss_fmt = formata_valor(self.base_inss)
-        self.base_irpf_fmt = formata_valor(self.base_irpf)
-        self.fgts_fmt = formata_valor(self.fgts)
-        self.inss_fmt = formata_valor(self.inss)
-        self.irpf_fmt = formata_valor(self.irpf)
+        self.data_admissao_fmt = data.formata_data(self.contract_id.date_start)
+        self.salario_base_fmt = valor.formata_valor(self.contract_id.wage)
+        self.total_folha_fmt = valor.formata_valor(self.total_folha)
+        self.total_proventos_fmt = valor.formata_valor(self.total_proventos)
+        self.total_descontos_fmt = valor.formata_valor(self.total_descontos)
+        self.base_fgts_fmt = valor.formata_valor(self.base_fgts)
+        self.base_inss_fmt = valor.formata_valor(self.base_inss)
+        self.base_irpf_fmt = valor.formata_valor(self.base_irpf)
+        self.fgts_fmt = valor.formata_valor(self.fgts)
+        self.inss_fmt = valor.formata_valor(self.inss)
+        self.irpf_fmt = valor.formata_valor(self.irpf)
 
     employee_id_readonly = fields.Many2one(
         string=u'Funcionário',
@@ -781,10 +800,11 @@ class HrPayslipeLine(models.Model):
     @api.model
     def _valor_provento(self):
         for record in self:
-            record.quantity_fmt = formata_valor(record.quantity)
+            record.quantity_fmt = valor.formata_valor(record.quantity)
             if record.salary_rule_id.category_id.code == "PROVENTO":
                 record.valor_provento = record.total
-                record.valor_provento_fmt = formata_valor(record.valor_provento)
+                record.valor_provento_fmt = \
+                    valor.formata_valor(record.valor_provento)
             else:
                 record.valor_provento = 0.00
                 record.valor_provento_fmt = ''
@@ -796,7 +816,8 @@ class HrPayslipeLine(models.Model):
                     or record.salary_rule_id.code == "INSS" \
                     or record.salary_rule_id.code == "IRPF":
                 record.valor_deducao = record.total
-                record.valor_deducao_fmt = formata_valor(record.valor_deducao)
+                record.valor_deducao_fmt = \
+                    valor.formata_valor(record.valor_deducao)
             else:
                 record.valor_deducao = 0.00
                 record.valor_deducao_fmt = ''
