@@ -5,6 +5,14 @@
 from openerp import api, fields, models, _
 from openerp.exceptions import Warning
 
+_logger = logging.getLogger(__name__)
+
+try:
+    from pybrasil.valor.decimal import Decimal, ROUND_HALP_UP
+
+except ImportError:
+    _logger.info('Cannot import pybrasil')
+
 
 class L10nBrHrIncomeTax(models.Model):
     _name = 'l10n_br.hr.income.tax'
@@ -30,7 +38,7 @@ class L10nBrHrIncomeTax(models.Model):
         return result
 
     @api.multi
-    def _compute_irrf(self, BASE_IRRF, employee_id, inss, date_from):
+    def _compute_irrf(self, BASE_IRRF, employee_id, date_from):
         ano = fields.Datetime.from_string(date_from).year
         employee = self.env['hr.employee'].browse(employee_id)
         tabela_irrf_obj = self.env['l10n_br.hr.income.tax']
@@ -52,8 +60,13 @@ class L10nBrHrIncomeTax(models.Model):
         if tabela_vigente:
             for faixa in tabela_vigente:
                 if BASE_IRRF > faixa.max_wage:
-                    return (BASE_IRRF - inss - dependent_values) * \
-                           (faixa.rate/100.00) - faixa.deductable
+                    irrf = Decimal(BASE_IRRF or 0)
+                    irrf -= Decimal(inss or 0)
+                    irrf -= Decimal(dependent_values or 0)
+                    irrf *= Decimal(faixa.rate) / 100
+                    irrf = irrf.quantize(Decimal('0.01'), ROUND_HALP_UP)
+                    irrf -= Decimal(faixa.deductable)
+                    return irrf
         else:
             raise Warning(
                 _('Tabela de IRRF do ano Vigente Não encontrada!')

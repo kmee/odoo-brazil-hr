@@ -7,7 +7,13 @@
 from openerp import exceptions, _
 from openerp import api, fields, models
 
-# _logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
+
+try:
+    from pybrasil.valor.decimal import Decimal, ROUND_DOWN
+
+except ImportError:
+    _logger.info('Cannot import pybrasil')
 
 
 class L10nBrHrSocialTax(models.Model):
@@ -43,9 +49,15 @@ class L10nBrHrSocialTax(models.Model):
         if tabela_vigente:
             for faixa in tabela_vigente:
                 if BASE_INSS < faixa.max_wage:
-                    return BASE_INSS * faixa.rate / 100.00
-            return \
-                tabela_vigente[-1].max_wage * tabela_vigente[-1].rate / 100.00
+                    inss = Decimal(BASE_INSS)
+                    inss *= Decimal(faixa.rate) / 100
+                    inss = inss.quantize(Decimal('0.01'), ROUND_DOWN)
+                    return inss
+
+            inss = Decimal(tabela_vigente[-1].max_wage)
+            inss *= Decimal(tabela_vigente[-1].rate) / 100
+            inss = inss.quantize(Decimal('0.01'), ROUND_DOWN)
+            return inss
 
         else:
             raise exceptions.Warning(
