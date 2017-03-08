@@ -12,7 +12,6 @@ class HrHolidays(models.Model):
         comodel_name='hr.contract',
         ondelete='cascade',
         string=u'Contrato associado',
-        required=True,
     )
 
     @api.onchange('contrato_id')
