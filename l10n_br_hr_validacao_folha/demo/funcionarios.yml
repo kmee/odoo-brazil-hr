@@ -1,0 +1,39 @@
+-
+    Criar funcionarios da ABGF
+-
+  !record {model: hr.employee, id: hr_employee_juliana}:
+    name: 'JULIANA '
+    have_dependent: true
+-
+  !record {model: hr.employee.dependent, id: hr_employee_juliana_dep_1}:
+    dependent_name: 'DEPENDENTE 1 JULIANA '
+    dependent_dob: '2010-01-01'
+    dependent_type_id: l10n_br_hr.l10n_br_dependent_3
+    employee_id: hr_employee_juliana
+-
+  !record {model: hr.employee.dependent, id: hr_employee_juliana_dep_2}:
+    dependent_name: 'DEPENDENTE 2 JULIANA '
+    dependent_dob: '2010-01-01'
+    dependent_type_id: l10n_br_hr.l10n_br_dependent_3
+    employee_id: hr_employee_juliana
+-
+  !record {model: hr.employee.dependent, id: hr_employee_juliana_dep_3}:
+    dependent_name: 'DEPENDENTE 3 JULIANA '
+    dependent_dob: '2010-01-01'
+    dependent_type_id: l10n_br_hr.l10n_br_dependent_3
+    employee_id: hr_employee_juliana
+-
+  !record {model: hr.employee, id: hr_employee_carolina}:
+    name: 'CAROLINA'
+-
+  !record {model: hr.employee, id: hr_employee_barbara}:
+    name: 'BARBARA'
+-
+  !record {model: hr.employee, id: hr_employee_micheli}:
+    name: 'MICHELI'
+-
+  !record {model: hr.employee, id: hr_employee_paula}:
+    name: 'PAULA'
+-
+  !record {model: hr.employee, id: hr_employee_rheila}:
+    name: 'RHEILA'
