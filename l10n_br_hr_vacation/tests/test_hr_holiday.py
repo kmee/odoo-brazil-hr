@@ -19,14 +19,14 @@ class TestHrHoliday(common.TransactionCase):
         self.hr_job = self.env['hr.job']
 
         self.user_hr_user_id = self.res_users.create({
-            'name': 'Hr User',
-            'login': 'hruser',
-            'alias_name': 'User Mileo',
-            'email': 'hruser@email.com',
+            'name': 'ANA BEATRIZ CARVALHO',
+            'login': 'ana_beatriz',
+            'alias_name': 'ANA BEATRIZ CARVALHO',
+            'email': 'anabeatriz@email.com',
         })
 
         self.employee_hruser_id = self.hr_employee.create({
-            'name': 'Employee Luiza',
+            'name': 'ANA BEATRIZ CARVALHO',
             'user_id': self.user_hr_user_id.id,
         })
 
@@ -56,7 +56,6 @@ class TestHrHoliday(common.TransactionCase):
 
         # Solicitacao de férias do funcionario
         ferias = self.hr_holidays.create({
-            'name': 'Ferias Do ' + contrato.employee_id.name,
             'type': 'remove',
             'parent_id': holiday_periodo_aquisitivo.id,
             'holiday_type': 'employee',
@@ -68,10 +67,13 @@ class TestHrHoliday(common.TransactionCase):
             'date_from': inicio_ferias,
             'date_to': fim_ferias,
             'contrato_id': contrato.id,
-            'user_id': self.user_hr_user_id.id,
         })
-        # Chamando Onchange manualmente para setar o controle de férias
+
+        # Chamar onchanges manualmente
+        ferias.setar_datas_core()
+        ferias._compute_name_holiday()
         ferias._compute_contract()
+        ferias.onchange_contrato()
         # Aprovacao da solicitacao do funcionario
         ferias.holidays_validate()
         return ferias
@@ -82,26 +84,16 @@ class TestHrHoliday(common.TransactionCase):
         :param date_start:
         :return:
         """
-        employee_id = self.criar_funcionario('ANA BEATRIZ CARVALHO')
         estrutura_salario = self.env.ref(
             'l10n_br_hr_payroll.hr_salary_structure_FUNCAO_COMISSIONADA')
         contrato_id = self.hr_contract.create({
-            'name': 'Contrato ' + employee_id.name,
-            'employee_id': employee_id.id,
+            'name': 'Contrato ' + self.employee_hruser_id.name,
+            'employee_id': self.employee_hruser_id.id,
             'wage': 12345.67,
             'struct_id': estrutura_salario.id,
             'date_start': date_start,
         })
         return contrato_id
-
-    def criar_funcionario(self, nome):
-        """
-        Criar um employee apartir de um nome e sua quantidade de dependentes
-        :param nome: str Nome do funcionario
-        :return: hr.employee
-        """
-        funcionario = self.hr_employee.create({'name': nome})
-        return funcionario
 
     def test_00_criacao_contrato(self):
         """
@@ -114,7 +106,7 @@ class TestHrHoliday(common.TransactionCase):
         self.assertEqual(contrato.date_start, '2014-01-01')
         self.assertEqual(contrato.wage, 12345.67)
 
-    def test_00(self):
+    def test_00_aprovar_holiday_marco(self):
         """
         Alocar ferias em março
         """
@@ -126,6 +118,10 @@ class TestHrHoliday(common.TransactionCase):
         ferias = self.atribuir_ferias(
             contrato, '2017-03-01', '2017-03-20', 20, 0)
 
+        # Aprovação do holidays
+        self.assertEquals(
+            ferias.state, 'validate', "Ferias nao validada corretamente")
+
         # Teste na construção do Calendar.Event
         calendar_event_id = ferias.meeting_id
 
@@ -136,6 +132,14 @@ class TestHrHoliday(common.TransactionCase):
             ferias.date_from, ferias.date_to,
             ferias.number_of_days_temp * 8, False
         )
+
+        self.assertEquals(
+            calendar_event_id.name,
+            u'[ANA BEATRIZ CARVALHO] Férias (01/03/2017-20/03/2017)')
+
+        self.assertEquals(
+            calendar_event_id.display_time,
+            u'01-03-2017 em 00:00:00 Para\n20-03-2017 em 00:00:00 (False)')
 
     # def test_01_atribuicao_ferias(self):
     #     """
