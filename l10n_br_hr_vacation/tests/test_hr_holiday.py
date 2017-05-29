@@ -84,8 +84,7 @@ class TestHrHoliday(common.TransactionCase):
         :param date_start:
         :return:
         """
-        estrutura_salario = self.env.ref(
-            'l10n_br_hr_payroll.hr_salary_structure_FUNCAO_COMISSIONADA')
+        estrutura_salario = self.env.ref('hr_payroll.structure_base')
         contrato_id = self.hr_contract.create({
             'name': 'Contrato ' + self.employee_hruser_id.name,
             'employee_id': self.employee_hruser_id.id,
@@ -122,8 +121,8 @@ class TestHrHoliday(common.TransactionCase):
         self.assertEquals(
             ferias.state, 'validate', "Ferias nao validada corretamente")
 
-        # Teste na construção do Calendar.Event
-        calendar_event_id = ferias.meeting_id
+        # Recebe uma copia do Calendar.Event com contexto
+        calendar_event_id = ferias.meeting_id.with_context(lang="pt_BR")
 
         # Chamada da função com problema devido ao mês de março conter 'ç'
         #  ` UnicodeDecodeError: 'ascii' codec can't decode byte 0xc3
