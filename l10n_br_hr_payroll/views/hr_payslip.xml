@@ -181,7 +181,7 @@
 
                 <!--Redefinindo campo Funcionario-->
                 <field name="contract_id" position="replace">
-                    <field name="employee_id" readonly="1"/>
+                    <field name="employee_id" readonly="1" required="False"/>
                     <field name="tipo_de_folha" invisible="1"/>
                 </field>
 

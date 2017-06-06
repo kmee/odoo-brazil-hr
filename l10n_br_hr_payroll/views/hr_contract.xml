@@ -32,19 +32,68 @@
                     <page string="Alterações Contratuais">
                         <notebook>
                             <page string="Remuneração">
-                                <field name="change_salary_ids"/>
+                                <field name="change_salary_ids">
+                                    <tree>
+                                        <field name="contract_id"/>
+                                        <field name="change_date"/>
+                                        <field name="change_reason_id"/>
+                                        <field name="wage"/>
+                                        <field name="salary_unit"/>
+                                        <field name="struct_id"/>
+                                    </tree>
+                                </field>
                             </page>
                             <page string="Jornada">
-                                <field name="change_workdays_ids"/>
+                                <field name="change_workdays_ids">
+                                    <tree>
+                                        <field name="contract_id" required="True"/>
+                                        <field name="change_date"/>
+                                        <field name="change_reason_id"/>
+                                        <field name="working_hours"/>
+                                        <field name="schedule_pay"/>
+                                        <field name="monthly_hours"/>
+                                        <field name="weekly_hours"/>
+                                    </tree>
+                                </field>
                             </page>
                             <page string="Atividade/Cargo">
-                                <field name="change_job_ids"/>
+                                <field name="change_job_ids">
+                                    <tree>
+                                        <field name="contract_id" required="True"/>
+                                        <field name="change_date"/>
+                                        <field name="change_reason_id"/>
+                                        <field name="job_id"/>
+                                        <field name="type_id"/>
+                                        <field name="admission_type_id"/>
+                                        <field name="labor_bond_type_id"/>
+                                        <field name="labor_regime_id"/>
+                                    </tree>
+                                </field>
                             </page>
                             <page string="Filiação Sindical">
-                                <field name="change_labor_union_ids"/>
+                                <field name="change_labor_union_ids">
+                                    <tree>
+                                        <field name="contract_id" required="True"/>
+                                        <field name="change_date"/>
+                                        <field name="change_reason_id"/>
+                                        <field name="union"/>
+                                        <field name="union_cnpj"/>
+                                        <field name="union_entity_code"/>
+                                        <field name="discount_union_contribution"/>
+                                        <field name="month_base_date"/>
+                                    </tree>
+                                </field>
                             </page>
                             <page string="Lotação/Local de trabalho">
-                                <field name="change_place_ids"/>
+                                <field name="change_place_ids">
+                                    <tree>
+                                        <field name="contract_id" required="True"/>
+                                        <field name="change_date"/>
+                                        <field name="change_reason_id"/>
+                                        <field name="departamento_lotacao"/>
+                                        <field name="lotacao_cliente_fornecedor"/>
+                                    </tree>
+                                </field>
                             </page>
                         </notebook>
                     </page>

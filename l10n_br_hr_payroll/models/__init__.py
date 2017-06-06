@@ -12,7 +12,6 @@ from . import l10n_br_hr_rat_fap
 from . import l10n_br_hr_social_security_tax
 from . import resource_calendar
 from . import hr_salary_rule
-from . import l10n_br_hr_contract
 from . import hr_contract
 from . import hr_contract_salary_rule
 from . import hr_employee
@@ -20,3 +19,9 @@ from . import hr_payroll_structure
 from . import l10n_br_hr_medias
 from . import hr_payslip_run
 from . import res_config
+from . import hr_contract_change
+from . import hr_contract_change_cargo_atividade
+from . import hr_contract_change_filiacao_sindical
+from . import hr_contract_change_jornada
+from . import hr_contract_change_remuneracao
+from . import hr_contract_change_lotacao_local

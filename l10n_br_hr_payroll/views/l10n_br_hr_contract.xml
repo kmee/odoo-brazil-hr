@@ -12,5 +12,35 @@
             <field eval="[(4, ref('base.group_hr_manager'))]" name="groups_id"/>
         </record>
 
+        <record id="hr_contract_change_form" model="ir.ui.view">
+            <field name="name">hr.contract.change.form</field>
+            <field name="model">hr.contract.change</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="apply_contract_changes" type="object" string="Aplicar Alterações" />
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="create_uid" string="Alterado por"
+                                       attrs="{'readonly': [('state', '=', 'applied')], 'invisible': [('state', '=', 'draft')]}"/>
+                                <field name="change_type" invisible="True" attrs="{'readonly': [('state', '=', 'applied')]}"/>
+                                <field name="contract_id" required="True" attrs="{'readonly': [('state', '=', 'applied')]}"/>
+                                <field name="change_reason_id" attrs="{'readonly': [('state', '=', 'applied')]}"/>
+                            </group>
+                            <group>
+                                <field name="change_date" attrs="{'readonly': [('state', '=', 'applied')]}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="notes" attrs="{'readonly': [('state', '=', 'applied')]}"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
     </data>
 </openerp>

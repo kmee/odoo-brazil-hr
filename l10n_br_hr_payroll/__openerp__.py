@@ -21,6 +21,7 @@
         'python': ['pybrasil'],
     },
     'data': [
+        'data/hr_contract_change_reason.xml',
         'data/l10n_br_hr_payroll_categorias.xml',
         'data/l10n_br_hr_contract_sequence.xml',
         'data/l10n_br_hr_payroll_rubricas.xml',

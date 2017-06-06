@@ -59,12 +59,13 @@ class HrContract(models.Model):
 
     @api.multi
     def _buscar_salario_vigente_periodo(self, data_inicio, data_fim):
-        contract_change_obj = self.env['l10n_br_hr.contract.change']
+        contract_change_obj = self.env['hr.contract.change']
         change = contract_change_obj.search(
             [
                 ('change_date', '>=', data_inicio),
                 ('change_date', '<=', data_fim),
                 ('wage', '>', 0),
+                ('change_type', '=', 'remuneracao')
             ],
             order="change_date DESC",
             limit=1,
@@ -107,7 +108,7 @@ class HrContract(models.Model):
         string=u"Rúbricas específicas",
     )
     change_salary_ids = fields.One2many(
-        comodel_name='l10n_br_hr.contract.change',
+        comodel_name='hr.contract.change',
         inverse_name='contract_id',
         string=u"Remuneração",
         domain=[
@@ -115,7 +116,7 @@ class HrContract(models.Model):
         ],
     )
     change_workdays_ids = fields.One2many(
-        comodel_name='l10n_br_hr.contract.change',
+        comodel_name='hr.contract.change',
         inverse_name='contract_id',
         string=u"Jornada",
         domain=[
@@ -123,7 +124,7 @@ class HrContract(models.Model):
         ],
     )
     change_job_ids = fields.One2many(
-        comodel_name='l10n_br_hr.contract.change',
+        comodel_name='hr.contract.change',
         inverse_name='contract_id',
         string=u"Atividade/Cargo",
         domain=[
@@ -131,7 +132,7 @@ class HrContract(models.Model):
         ],
     )
     change_labor_union_ids = fields.One2many(
-        comodel_name='l10n_br_hr.contract.change',
+        comodel_name='hr.contract.change',
         inverse_name='contract_id',
         string=u"Filiação Sindical",
         domain=[
@@ -139,11 +140,11 @@ class HrContract(models.Model):
         ],
     )
     change_place_ids = fields.One2many(
-        comodel_name='l10n_br_hr.contract.change',
+        comodel_name='hr.contract.change',
         inverse_name='contract_id',
         string=u"Lotação/Local de trabalho",
         domain=[
-            ('change_type', '=', 'filiacao-sindical')
+            ('change_type', '=', 'lotacao-local')
         ],
     )
     company_id = fields.Many2one(
