@@ -20,3 +20,6 @@
 "access_hr_payslip_input_officer","access_hr_payslip_input_officer","hr_payroll.model_hr_payslip_input","base.group_hr_user",1,1,1,1
 "access_hr_rule_input_officer","access_hr_rule_input_officer","hr_payroll.model_hr_rule_input","base.group_hr_user",1,1,1,1
 "access_hr_rule_rat_fap_officer","access_hr_rule_rat_fap_officer","model_l10n_br_hr_rat_fap","base.group_hr_user",1,1,1,1
+"access_hr_salary_rule_just_admin","access_hr_salary_rule_just_admin","hr_payroll.model_hr_salary_rule","base.group_no_one",1,1,1,1
+hr_payroll.access_hr_salary_rule_user,hr.salary.rule.user,hr_payroll.model_hr_salary_rule,base.group_hr_user,1,0,0,0
+

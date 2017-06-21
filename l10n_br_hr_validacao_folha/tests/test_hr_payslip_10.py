@@ -236,7 +236,7 @@ class TestHrPayslip(common.TransactionCase):
             - Reembolso Plano de Saude - 400.00
             - Reembolso Auxílio Creche - 370.71
             - VA/VR                    - 6.04
-        Dependentes: 2
+        Dependentes: 3
         Ferias: 13/10/16 - 22/10/16
         Abono Pecuniario: 0
         Dias Trabalhados: 20
@@ -273,34 +273,34 @@ class TestHrPayslip(common.TransactionCase):
 
                 # Proventos
                 if rubrica.code == 'SALARIO':
-                    self.assertEqual(round(rubrica.total, 2), 7290.97)
+                    self.assertEqual(rubrica.total, 7290.97)
                 if rubrica.code == 'REMBOLSO_SAUDE':
-                    self.assertEqual(round(rubrica.total, 2), 400.00)
+                    self.assertEqual(rubrica.total, 400.00)
                 if rubrica.code == 'REMBOLSO_AUXILIO_CRECHE':
-                    self.assertEqual(round(rubrica.total, 2), 370.71)
+                    self.assertEqual(rubrica.total, 370.71)
                 if rubrica.code == 'FERIAS':
-                    self.assertEqual(round(rubrica.total, 2), 3645.49)
+                    self.assertEqual(rubrica.total, 3645.49)
                 if rubrica.code == '1/3_FERIAS':
-                    self.assertEqual(round(rubrica.total, 2), 1215.16)
+                    self.assertEqual(rubrica.total, 1215.16)
 
                 # Deduções
                 if rubrica.code == 'VA/VR':
-                    self.assertEqual(round(rubrica.total, 2), 6.04)
+                    self.assertEqual(rubrica.total, 6.04)
                 if rubrica.code == 'PAGAMENTO_FERIAS':
-                    self.assertEqual(round(rubrica.total, 2), 4116.74)
+                    self.assertEqual(rubrica.total, 4116.74)
                 if rubrica.code == 'IRPF':  # IRRF
-                    self.assertEqual(round(rubrica.total, 2), 969.29)
+                    self.assertEqual(rubrica.total, 969.29)
                 if rubrica.code == 'IRPF_FERIAS':  # IRRF FERIAS
-                    self.assertEqual(round(rubrica.total, 2), 209.24)
+                    self.assertEqual(rubrica.total, 209.24)
                 # INSS
                 if rubrica.code == 'INSS':  # INSS Teto
-                    self.assertEqual(round(rubrica.total, 2), 570.88)
+                    self.assertEqual(rubrica.total, 570.88)
                 # INSS FERIAS
                 if rubrica.code == 'INSS_FERIAS' and rubrica.valor_deducao:
-                    self.assertEqual(round(rubrica.total, 2), 534.67)
+                    self.assertEqual(rubrica.total, 534.67)
                 # INSS Ajuste FERIAS
                 if rubrica.code == 'INSS_FERIAS' and rubrica.valor_provento:
-                    self.assertEqual(round(rubrica.total, 2), 534.67)
+                    self.assertEqual(rubrica.total, 534.67)
 
                 # Referências de cálculos
                 if rubrica.code == 'BASE_INSS_FERIAS':
@@ -499,6 +499,8 @@ class TestHrPayslip(common.TransactionCase):
                 if rubrica.code == 'BASE_IRPF_FERIAS':  # BASE_IRRF FERIAS
                     # BASE_IRRF_FERIAS = FERIAS + 1/3 - INSS_FERIAS - Depend.
                     BASE_IRRF_FERIAS = round(4374.58 + 1458.19 - 570.88, 1)
+                    print ('======================= VAlor Correto =')
+                    print (rubrica.total)
                     self.assertEqual(round(rubrica.total, 2), BASE_IRRF_FERIAS)
 
                 if rubrica.code == 'BASE_INSS':  # BASE_INSS
