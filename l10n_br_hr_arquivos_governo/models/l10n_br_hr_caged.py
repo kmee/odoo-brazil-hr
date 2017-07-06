@@ -24,6 +24,7 @@ except ImportError:
 class HrCaged(models.Model):
 
     _name = 'hr.caged'
+    _inherit = ['abstract.arquivos.governo.workflow', 'mail.thread']
 
     mes_do_ano = fields.Selection(
         selection=MES_DO_ANO,
@@ -158,7 +159,7 @@ class HrCaged(models.Model):
         Dado um contrato, computar a linha de preenchimento do caged relativa
          ao preenchimento das informações da empresa que esta sendo informada.
         :param contrato - hr.contract -
-        :return: str - Linha de preenchimento do funcioario
+        :return: str -[b'abstract.arquivos.governo.workflow', b'mail.thread'] Linha de preenchimento do funcioario
         """
         company_id = self.company_id
         qtd_funcionarios = self.env['hr.contract'].search_count([
@@ -300,6 +301,23 @@ class HrCaged(models.Model):
         return caged._registro_Z()
 
     @api.multi
+    def action_open(self):
+        for record in self:
+            record.criar_anexo_caged()
+            super(HrCaged, record).action_open()
+
+    @api.multi
+    def criar_anexo_caged(self):
+        caged = Caged()
+        # Cria um arquivo temporario txt do CAGED e escreve o que foi gerado
+        path_arquivo = caged._gerar_arquivo_temp(self.caged_txt, 'CAGED')
+        # Gera o anexo apartir do txt do grrf no temp do sistema
+        mes = str(self.mes_do_ano) \
+            if self.mes_do_ano > 9 else '0' + str(self.mes_do_ano)
+        nome_arquivo = 'CGED' + str(self.ano) + '.M' + mes
+        self._gerar_anexo(nome_arquivo, path_arquivo)
+
+    @api.multi
     def doit(self):
 
         contrato_model = self.env['hr.contract']
@@ -358,14 +376,6 @@ class HrCaged(models.Model):
 
         # Guardar campo no modelo com informações do CAGED
         self.caged_txt = caged_txt
-
-        # Cria um arquivo temporario txt do CAGED e escreve o que foi gerado
-        path_arquivo = caged._gerar_arquivo_temp(caged_txt, 'CAGED')
-        # Gera o anexo apartir do txt do grrf no temp do sistema
-        mes = str(self.mes_do_ano) \
-            if self.mes_do_ano > 9 else '0' + str(self.mes_do_ano)
-        nome_arquivo = 'CGED' + str(self.ano) + '.M' + mes
-        self._gerar_anexo(nome_arquivo, path_arquivo)
 
         return True
 
