@@ -82,10 +82,11 @@
     </record>
 
     <record model="ir.actions.act_window.view" id="l10n_br_hr_contract_change_cargo_atividade_form_action">
-        <field eval="2" name="sequence"/>
+        <field eval="3" name="sequence"/>
         <field name="view_mode">form</field>
         <field name="act_window_id" ref="l10n_br_hr_contract_change_cargo_atividade_action"/>
         <field name="view_id" ref="l10n_br_hr_contract_change_cargo_atividade_form"/>
+        <field eval="[(4, ref('base.group_hr_user'))]" name="groups_id"/>
     </record>
 
 </data>
