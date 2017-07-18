@@ -1638,7 +1638,7 @@ else:
             <field name="custom_amount_python_compute">result = CALCULAR.get_specific_rubric_value(rubrica.id)</field>
             <field name="amount_select">code</field>
             <field name="custom_amount_select">code</field>
-            <field name="compoe_base_INSS"></field>
+            <field name="compoe_base_INSS">True</field>
             <field name="compoe_base_IR"></field>
             <field name="compoe_base_FGTS"></field>
             <field name="amount_fix"></field>
@@ -2017,7 +2017,7 @@ if not result:
             <field name="custom_amount_python_compute">result = CALCULAR.get_specific_rubric_value(rubrica.id)</field>
             <field name="amount_select">code</field>
             <field name="custom_amount_select">code</field>
-            <field name="compoe_base_INSS"></field>
+            <field name="compoe_base_INSS">True</field>
             <field name="compoe_base_IR"></field>
             <field name="compoe_base_FGTS"></field>
             <field name="amount_fix"></field>
