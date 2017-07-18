@@ -170,7 +170,7 @@ if result  &lt;  0:
             <field name="code">IRPF</field>
             <field name="name">IRPF</field>
             <field name="active">True</field>
-            <field name="sequence">502.0</field>
+            <field name="sequence">599.0</field>
             <field name="category_id" ref="hr_payroll.IRPF"/>
             <field name="condition_select">none</field>
             <field name="condition_python">
@@ -270,7 +270,7 @@ result = rules.NET  &gt;  categories.NET * 0.10</field>
             <field name="code">BASE_IRPF</field>
             <field name="name">Base IRRF</field>
             <field name="active">True</field>
-            <field name="sequence">501.0</field>
+            <field name="sequence">598.0</field>
             <field name="category_id" ref="hr_payroll.REFERENCIA"/>
             <field name="condition_select">none</field>
             <field name="condition_python">
