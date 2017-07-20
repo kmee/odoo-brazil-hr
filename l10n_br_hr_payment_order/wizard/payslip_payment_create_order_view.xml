@@ -13,7 +13,7 @@
                         <field name="ano" />
                     </group>
                     <footer>
-                        <button name="buscar_linhas_holerites" string="Buscar Rubricas dos holerites" type="object" class="oe_highlight"/>
+                        <button name="buscar_linhas_holerites" string="Buscar Holerites" type="object" class="oe_highlight"/>
                         or
                         <button string="Cancelar" class="oe_link" special="cancel"/>
                     </footer>
@@ -26,11 +26,11 @@
             <field name="model">hr.payslip.line</field>
             <field name="arch" type="xml">
                 <tree string="Journal Items" editable="0" create="0" delete="1">
-                    <field name="name"/>
-                    <field name="slip_id"/>
-                    <field name="partner_id"/>
-                    <field name="code" />
-                    <field name="total" />
+                    <field name="number"/>
+                    <field name="contract_id"/>
+                    <field name="mes"/>
+                    <field name="ano" />
+                    <field name="tipo_de_folha" />
                 </tree>
             </field>
         </record>

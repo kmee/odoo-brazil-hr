@@ -32,10 +32,10 @@ class PayslipPaymentCreateOrder(models.Model):
     )
 
     entries = fields.Many2many(
-        comodel_name='hr.payslip.line',
-        rel='payorder_line_payslip_line_rel',
+        comodel_name='hr.payslip',
+        rel='payorder_line_payslip_rel',
         column1='pay_id',
-        column2='line_id',
+        column2='payslip_id',
         string='Entries'
     )
 
@@ -60,20 +60,8 @@ class PayslipPaymentCreateOrder(models.Model):
                 ('state', '=', 'verify')
             ]
         )
-        rubricas_obj = self.env['hr.salary.rule']
-        rubricas_pagaveis = rubricas_obj.search(
-            [
-                ('eh_pagavel', '=', True)
-            ]
-        )
-        payslip_line_ids = payslip_line_obj.search(
-            [
-                ('slip_id', 'in', payslip_ids.ids),
-                ('salary_rule_id', 'in', rubricas_pagaveis.ids)
-            ]
-        )
         context = self.env.context.copy()
-        context['lines_id'] = payslip_line_ids.ids
+        context['payslip_id'] = payslip_ids.ids
         context['populate_results'] = True
         model_data_obj = self.env['ir.model.data']
         model_datas = model_data_obj.search(
@@ -111,6 +99,14 @@ class PayslipPaymentCreateOrder(models.Model):
         return res
 
     @api.multi
+    def _buscar_rubricas_a_pagar(self, payslip):
+        rubricas = []
+        for line in payslip:
+            if line.code in ['LIQUIDO', 'PENSAO_ALIMENTICIA']:
+                rubricas.append(line)
+        return rubricas
+
+    @api.multi
     def create_payment(self):
         if not self.entries:
             return {'type': 'ir.actions.act_window_close'}
@@ -119,8 +115,10 @@ class PayslipPaymentCreateOrder(models.Model):
         payment = self.env['payment.order'].browse(context['active_id'])
         # Populate the current payment with new lines:
         for line in self.entries:
-            vals = self._preparar_linha_do_holerite(payment, line)
-            payment_line_obj.create(vals)
+            linha_rubrica = self._buscar_rubricas_a_pagar(line)
+            for rubrica in linha_rubrica:
+                vals = self._preparar_linha_do_holerite(payment, rubrica)
+                payment_line_obj.create(vals)
         # Force reload of payment order view as a workaround for lp:1155525
         return {'name': _('Payment Orders'),
                 'context': context,
