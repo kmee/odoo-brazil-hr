@@ -2246,6 +2246,9 @@ class HrPayslip(models.Model):
                 datetime.strptime(str(mes) + '-' +
                                   str(record.ano), '%m-%Y'))
 
+            days = (fields.Date.from_string(ultimo_dia_do_mes) -
+                    fields.Date.from_string(primeiro_dia_do_mes)).days
+
             record.date_from = primeiro_dia_do_mes
             record.date_to = ultimo_dia_do_mes
 
@@ -2263,6 +2266,9 @@ class HrPayslip(models.Model):
                 record.date_to = \
                     fields.Date.from_string(record.data_afastamento) - \
                     timedelta(days=1)
+                record.date_from = fields.Date.from_string(record.date_to) - \
+                    timedelta(days=days)
+                record.mes_do_ano2 =fields.Date.from_string(record.date_to).month
 
     @api.multi
     def _buscar_holerites_periodo_aquisitivo(self):
