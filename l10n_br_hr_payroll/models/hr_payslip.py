@@ -1266,25 +1266,26 @@ class HrPayslip(models.Model):
 
         if periodo.saldo:
             data_inicio = self.data_afastamento
-            data_fim = data.parse_datetime(data_inicio) + relativedelta(days=periodo.avos * 2.5)
+            if periodo.avos >= 0:
+                data_fim = data.parse_datetime(data_inicio) + relativedelta(days=periodo.avos * 2.5)
 
-            domain = [
-                ('tipo_de_folha', '=', 'ferias'),
-                ('is_simulacao', '=', True),
-                ('periodo_aquisitivo', '=', periodo_id)
-            ]
-            payslip_simulacao = self.env['hr.payslip'].search(domain)
-            if payslip_simulacao:
-                payslip_simulacao_criada = payslip_simulacao
-            else:
-                payslip_simulacao_criada = self.gerar_simulacao(
-                    'ferias', self.mes_do_ano,
-                    self.ano, data_inicio,
-                    data_fim, ferias_vencida=ferias_vencida,
-                    periodo_aquisitivo=periodo
-                )
-            return self._buscar_valor_bruto_simulacao(
-                payslip_simulacao_criada, um_terco_ferias)
+                domain = [
+                    ('tipo_de_folha', '=', 'ferias'),
+                    ('is_simulacao', '=', True),
+                    ('periodo_aquisitivo', '=', periodo_id)
+                ]
+                payslip_simulacao = self.env['hr.payslip'].search(domain)
+                if payslip_simulacao:
+                    payslip_simulacao_criada = payslip_simulacao
+                else:
+                    payslip_simulacao_criada = self.gerar_simulacao(
+                        'ferias', self.mes_do_ano,
+                        self.ano, data_inicio,
+                        data_fim, ferias_vencida=ferias_vencida,
+                        periodo_aquisitivo=periodo
+                    )
+                return self._buscar_valor_bruto_simulacao(
+                    payslip_simulacao_criada, um_terco_ferias)
 
     def _simulacao_decimo_terceiro(self):
 
