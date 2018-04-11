@@ -2213,6 +2213,7 @@ class HrPayslip(models.Model):
                     timedelta(days=1)
                 record.date_from = fields.Date.from_string(record.date_to) - \
                     timedelta(days=days)
+                record.mes_do_ano2 =fields.Date.from_string(record.date_to).month
 
     @api.multi
     def _buscar_holerites_periodo_aquisitivo(self):
