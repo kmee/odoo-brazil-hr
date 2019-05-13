@@ -2161,7 +2161,7 @@ class HrPayslip(models.Model):
 
         # Variavel para contabilizar os avos na contabilização do
         # adiantamento do decimo terceiro salario
-        adiantamento_avos_13 = 12
+        adiantamento_avos_13 = 6
 
         #
         # Calcula os Avos do payslip para Provisão de 13º Salário
@@ -2187,7 +2187,7 @@ class HrPayslip(models.Model):
 
             avos_13 = int(mes_do_ano) - int(mes_inicio_contrato) + 1
 
-            adiantamento_avos_13 = 13 - int(mes_inicio_contrato)
+            adiantamento_avos_13 = 7 - int(mes_inicio_contrato)
             
             # Se trabalhou mais do que 15 dias no mes, contar o mes nos avos
             # de adiantamento de 13 salario. Senao trabalhou pelo menos 15
@@ -3154,7 +3154,7 @@ class HrPayslip(models.Model):
         pensao = 0
 
         if porcentagem_pensao:
-            bruto = locals[u'BRUTO']
+            bruto = locals.get(u'BRUTO', 0)
             inss = 0
 
             total_decimo_terceiro = self._get_valor_bruto('decimo_terceiro')
@@ -3166,9 +3166,9 @@ class HrPayslip(models.Model):
             dependent_values = self.get_dependent_values_irrf(self.ano)
 
             if self.tipo_de_folha in ['normal', 'decimo_terceiro']:
-                inss = locals[u'INSS']
+                inss = locals.get(u'INSS', 0)
             else:
-                inss = locals[u'INSS_COMPETENCIA_ATUAL']
+                inss = locals.get(u'INSS_COMPETENCIA_ATUAL', 0)
 
             base_irrf = self.BASE_IRRF(bruto, inss)
 
