@@ -1070,7 +1070,10 @@ class HrPayslip(models.Model):
 
         dependent_values = self.get_dependent_values_irrf(ano)
 
-        return TOTAL_IRRF - INSS - dependent_values
+        if TOTAL_IRRF and INSS:
+            return TOTAL_IRRF - INSS - dependent_values
+        else:
+            return 0
 
     def get_dependent_values_irrf(self, ano):
         deducao_dependente_obj = self.env[
@@ -2202,8 +2205,8 @@ class HrPayslip(models.Model):
             # Se trabalhou mais do que 15 dias no mes, contar o mes nos avos
             # de adiantamento de 13 salario. Senao trabalhou pelo menos 15
             # dias na data de contratacao, diminuir um avo da contabilidade dos avos
-            if not ultimo_dia_mes(payslip.contract_id.date_start).day - \
-                    dia_inicio_contrato + 1 >= 15:
+            ultimo_dia = fields.Date.from_string(payslip.contract_id.date_end).day if payslip.contract_id.date_end else ultimo_dia_mes(payslip.contract_id.date_start).day
+            if not ultimo_dia - dia_inicio_contrato + 1 >= 15:
                 avos_13 -= 1
                 adiantamento_avos_13 -= 1
         else:
