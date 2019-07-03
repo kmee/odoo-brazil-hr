@@ -749,12 +749,21 @@ class HrPayslip(models.Model):
             if holerite.periodo_aquisitivo:
                 holerite.saldo_periodo_aquisitivo = \
                     holerite.periodo_aquisitivo.saldo
+            # Campo para configurar o saldo do Período aquisitivo manualmente.
+            # Para gerar provisão simulando o passado
+            if holerite.saldo_periodo_aquisitivo_manual:
+                holerite.saldo_periodo_aquisitivo = \
+                    holerite.saldo_periodo_aquisitivo_manual
 
     saldo_periodo_aquisitivo = fields.Integer(
         string="Saldo de dias do Periodo Aquisitivo",
         compute='_compute_saldo_periodo_aquisitivo',
         help=u'Saldo de dias do funcionaŕio, de acordo com número de faltas'
              u'dentro do período aquisitivo selecionado.',
+    )
+
+    saldo_periodo_aquisitivo_manual = fields.Integer(
+        string="Forçar Saldo do Periodo Aquisitivo",
     )
 
     def get_attendances(self, nome, sequence, code, number_of_days,
@@ -814,13 +823,9 @@ class HrPayslip(models.Model):
             if self.tipo_de_folha == 'ferias' and self.is_simulacao:
                 dias_mes = 30
 
-            if self.tipo_de_folha == 'provisao_ferias':
-                dias_mes = 30
-
             result += [self.get_attendances(
                 u'Dias no Mês Atual', 20, u'DIAS_MES_COMPETENCIA_ATUAL',
                 dias_mes, 0.0, contract_id)]
-
 
             # Utilizar mes civil
             dias_mes = resource_calendar_obj.get_dias_base(
@@ -898,7 +903,7 @@ class HrPayslip(models.Model):
             #
             if self.tipo_de_folha == 'provisao_ferias' or self.is_simulacao:
                 quantidade_dias_abono = 0
-                quantidade_dias_ferias = self.periodo_aquisitivo.saldo
+                quantidade_dias_ferias = self.saldo_periodo_aquisitivo
             else:
                 quantidade_dias_ferias, quantidade_dias_abono = \
                     self.env['resource.calendar'].get_quantidade_dias_ferias(
@@ -956,7 +961,7 @@ class HrPayslip(models.Model):
             # PAra Simulações da rescisao e provisão da folha
             if self.tipo_de_folha == 'provisao_ferias' or self.is_simulacao:
                 quantidade_dias_abono = 0
-                quantidade_dias_ferias = self.periodo_aquisitivo.saldo
+                quantidade_dias_ferias = self.saldo_periodo_aquisitivo
 
             result += [self.get_attendances(
                 u'Quantidade dias em Férias na Competência Atual', 38,
