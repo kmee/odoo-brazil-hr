@@ -755,14 +755,14 @@ class HrPayslip(models.Model):
                 holerite.saldo_periodo_aquisitivo = \
                     holerite.saldo_periodo_aquisitivo_manual
 
-    saldo_periodo_aquisitivo = fields.Integer(
+    saldo_periodo_aquisitivo = fields.Float(
         string="Saldo de dias do Periodo Aquisitivo",
         compute='_compute_saldo_periodo_aquisitivo',
         help=u'Saldo de dias do funcionaŕio, de acordo com número de faltas'
              u'dentro do período aquisitivo selecionado.',
     )
 
-    saldo_periodo_aquisitivo_manual = fields.Integer(
+    saldo_periodo_aquisitivo_manual = fields.Float(
         string="Forçar Saldo do Periodo Aquisitivo",
     )
 
@@ -983,6 +983,10 @@ class HrPayslip(models.Model):
                 self.env['resource.calendar'].get_quantidade_dias_ferias(
                     hr_contract, primeiro_dia_do_mes_seguinte,
                     ultimo_dia_do_mes_seguinte)
+
+            # PAra Simulações da rescisao e provisão da folha
+            if self.tipo_de_folha == 'provisao_ferias' or self.is_simulacao:
+                quantidade_dias_ferias_competencia_seguinte = 0
 
             result += [self.get_attendances(
                 u'Quantidade dias em Férias na Competência Seguinte', 39,
