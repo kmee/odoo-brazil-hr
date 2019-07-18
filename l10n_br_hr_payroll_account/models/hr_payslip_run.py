@@ -35,7 +35,8 @@ class L10nBrHrPayslip(models.Model):
         super(L10nBrHrPayslip, self).close_payslip_run()
         self.gerar_contabilizacao_lote()
 
-        if self.tipo_de_folha in ['provisao_decimo_terceiro', 'provisao_ferias']:
+        if self.tipo_de_folha in \
+                ['provisao_decimo_terceiro', 'provisao_ferias']:
 
             hr_payslip_run_id = self.search([
                 ('mes_do_ano','=', self.mes_do_ano - 1),
@@ -43,7 +44,8 @@ class L10nBrHrPayslip(models.Model):
             ])
 
             if hr_payslip_run_id.account_event_id:
-                hr_payslip_run_id.account_event_id.button_reverter_lancamentos()
+                hr_payslip_run_id.account_event_id.\
+                    button_reverter_lancamentos()
 
     @api.multi
     def gerar_rubricas_para_lancamentos_contabeis_lote(self):
@@ -66,7 +68,8 @@ class L10nBrHrPayslip(models.Model):
 
                 if code in all_rubricas:
                     # Somar rubrica do holerite ao dict totalizador
-                    valor_total = all_rubricas.get(code)[2].get('valor') + valor
+                    valor_total = \
+                        all_rubricas.get(code)[2].get('valor') + valor
                     all_rubricas.get(code)[2].update(valor=valor_total)
                     line_id = \
                         rubrica_holerite[2].get('hr_payslip_line_id')[0][1]
@@ -97,7 +100,8 @@ class L10nBrHrPayslip(models.Model):
                 'origem': '{},{}'.format('hr.payslip.run', lote.id),
             }
 
-            lote.account_event_id = self.env['account.event'].create(contabiliz)
+            lote.account_event_id =\
+                self.env['account.event'].create(contabiliz)
 
     @api.multi
     def gerar_codigo_contabilizacao(self):
@@ -117,7 +121,7 @@ class L10nBrHrPayslip(models.Model):
         for record in self:
             invalidos = ''
 
-            for holerite_id in record.slip_ids:
+            for holerite_id in record.slip_ids + record.payslip_rescisao_ids:
 
                 fgts_total = holerite_id.line_ids.filtered(
                     lambda x: x.code == 'FGTS').total
@@ -150,26 +154,30 @@ class L10nBrHrPayslip(models.Model):
         for record in self:
             invalidos = ''
 
-            for holerite_id in record.slip_ids:
+            for holerite_id in record.slip_ids + record.payslip_rescisao_ids:
 
-                fgts_total = holerite_id.line_ids.filtered(
+                inss_total = holerite_id.line_ids.filtered(
                     lambda x: x.code == 'INSS_EMPRESA_TOTAL').total
 
-                fgts_salario = holerite_id.line_ids.filtered(
+                inss_ferias = holerite_id.line_ids.filtered(
                     lambda x: x.code == 'INSS_EMPRESA_F_FERIAS').total or 0.0
 
-                fgts_salario_diretor = holerite_id.line_ids.filtered(
+                inss_salario_funcionario = holerite_id.line_ids.filtered(
                     lambda x: x.code == 'INSS_EMPRESA_F_SALARIO').total or 0.0
 
-                inss_empresa_salario_diretor = holerite_id.line_ids.filtered(
+                inss_salario_13 = holerite_id.line_ids.filtered(
+                    lambda x: x.code == 'INSS_EMPRESA_F_13').total or 0.0
+
+                inss_salario_diretor = holerite_id.line_ids.filtered(
                     lambda x: x.code == 'INSS_EMPRESA_D_SALARIO').total or 0.0
 
-                fgts_somado = \
-                    fgts_salario + fgts_salario_diretor + \
-                    inss_empresa_salario_diretor
+                inss_somado = \
+                    inss_ferias + inss_salario_funcionario + \
+                    inss_salario_diretor + inss_salario_13
 
-                if round(fgts_total, 2) != round(fgts_somado, 2):
+                if round(inss_total, 2) != round(inss_somado, 2):
                     invalidos += holerite_id.contract_id.display_name + '\n'
 
             if invalidos:
-                raise Warning('INSS EMPRESA inválido para:\n{}'.format(invalidos))
+                raise Warning(
+                    'INSS EMPRESA inválido para:\n{}'.format(invalidos))
