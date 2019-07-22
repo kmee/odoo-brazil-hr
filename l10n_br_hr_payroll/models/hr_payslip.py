@@ -2427,7 +2427,7 @@ class HrPayslip(models.Model):
 
                     # sum the amount for its salary category
                     baselocaldict = _sum_salary_rule_category(
-                        baselocaldict, line.salary_rule_id.category_id,
+                        baselocaldict, line.category_id,
                         line.total)
 
                     if line.category_id.code == 'DEDUCAO':
