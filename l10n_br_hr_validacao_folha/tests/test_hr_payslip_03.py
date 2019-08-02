@@ -80,10 +80,9 @@ class TestHrPayslip(common.TransactionCase):
 
     def criar_dependentes(self, funcionario, quantidade):
         while (quantidade > 0):
-            funcionario.have_dependent = True
             tipo_dependente = self.env.ref('l10n_br_hr.l10n_br_dependent_3')
             self.hr_employee_dependent.create({
-                'dependent_name':
+                'name':
                     'Filho do ' + funcionario.name + str(quantidade),
                 'dependent_dob': '2000-01-01',
                 'dependent_type_id': tipo_dependente.id,
