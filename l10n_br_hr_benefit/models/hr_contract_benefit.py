@@ -264,7 +264,7 @@ class HrContractBenefit(models.Model):
                 'benefit_type_id': benefit_type_id.id,
                 'contract_id': contract_id.id,
                 'period_id': period_id.id,
-                'partner_ids': [(6, 0,
+                'beneficiary_ids': [(6, 0,
                                      beneficios_agrupados[
                                          (contract_id, benefit_type_id)
                                      ].ids)],
