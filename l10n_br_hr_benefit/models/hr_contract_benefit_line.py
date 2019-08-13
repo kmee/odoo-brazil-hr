@@ -56,6 +56,7 @@ class HrContractBenefitLine(models.Model):
         related='contract_id.employee_id',
         readonly=True,
         index=True,
+        store=True,
         string='Colaborador',
     )
     period_id = fields.Many2one(
@@ -120,16 +121,59 @@ class HrContractBenefitLine(models.Model):
         readonly=True,
         track_visibility='onchange'
     )
-    rule_id = fields.Many2one(
+    income_rule_id = fields.Many2one(
         comodel_name="hr.salary.rule",
-        string=u"Rúbrica",
-        readonly=True,
+        string=u"Provento (+)",
+    )
+    deduction_rule_id = fields.Many2one(
+        comodel_name="hr.salary.rule",
+        string=u"Dedução (-)",
     )
     hr_payslip_id = fields.Many2one(
         comodel_name="hr.payslip",
-        string=u"Folha de pagamento",
+        string="Folha de pagamento",
         readonly=True,
     )
+    income_amount = fields.Float(
+        string='Valor apurado',
+    )
+    income_percentual = fields.Float(
+        string='Percentual apurado',
+    )
+    income_quantity = fields.Float(
+        string='Quantidade apurada',
+    )
+    deduction_amount = fields.Float(
+        string='Valor apurado',
+    )
+    deduction_percentual = fields.Float(
+        string='Percentual apurado',
+    )
+    deduction_quantity = fields.Float(
+        string='Quantidade apurada',
+    )
+
+    @api.model
+    def map_valid_benefit_line_to_payslip(self, hr_payslip_id):
+        """ Dado um conjunto de beneficios apurados, mapeia quais deles podem
+         compor uma folha de pagamento.
+
+        OBS: Não deve ser feita nenhuma validação neste método, apenas na
+        aprovação do registro e se ele não compoe nenhuma outra folha.
+
+        :param hr_payslip_id:
+        :return:
+        """
+        valid = self.env['hr.contract.benefit.line']
+        for record in self:
+            if record.state == 'validated':
+                if not record.hr_payslip_id or (
+                        record.hr_payslip_id.id == hr_payslip_id and not
+                        record.is_payroll_processed
+                ):
+                    valid |= record
+
+        return valid
 
     @api.onchange('hr_payslip_id')
     def onchange_payroll_processed(self):
@@ -155,6 +199,12 @@ class HrContractBenefitLine(models.Model):
                             record.period_id.name))
 
     @api.multi
+    def _get_rules(self):
+        self.ensure_one()
+        self.income_rule_id = self.benefit_type_id.income_rule_id
+        self.deduction_rule_id = self.benefit_type_id.deduction_rule_id
+
+    @api.multi
     def button_send_receipt(self):
         for record in self:
             if (record.benefit_type_id.line_need_approval_file and
@@ -173,6 +223,7 @@ class HrContractBenefitLine(models.Model):
                 record.state = 'validated'
             else:
                 record.state = 'waiting'
+                record._get_rules()
 
     @api.multi
     def button_approve_receipt(self):
@@ -184,7 +235,7 @@ class HrContractBenefitLine(models.Model):
                 )
 
             record.state = 'validated'
-            record.rule_id = record.benefit_type_id.rule_id
+            record._get_rules()
 
     @api.multi
     def button_exception_receipt(self):
