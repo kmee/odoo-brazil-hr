@@ -299,7 +299,7 @@ class WizardL10nBrHrEmployeeFichaRegistro(models.TransientModel):
         # Conjuge
         conjuge = self.dependent_ids.filtered(
             lambda x: x.dependent_type_id.name == 'Cônjuge')
-        self.conjuge = conjuge.dependent_name
+        self.conjuge = conjuge.name
 
         # Titulo Eleitoral
         self.titulo_eleitoral = u'{} - Zona {} - Seção {} '.format(
@@ -364,6 +364,16 @@ class WizardL10nBrHrEmployeeFichaRegistro(models.TransientModel):
         # Estado Civil
         self.estado_civil = \
             MARITAL[employee.marital] if employee.marital else False
+
+        # Forma de Pagamento
+        forma_pgto = contract.schedule_pay
+        if forma_pgto == 'monthly':
+            forma_pgto = 'Mensal'
+        if forma_pgto == 'weekly':
+            forma_pgto = 'Semanal'
+        if not forma_pgto:
+            forma_pgto = ' - '
+        self.forma_pg = forma_pgto
 
         # Preencher tabelas Many2Many
         self.change_salary_ids = contract.change_salary_ids

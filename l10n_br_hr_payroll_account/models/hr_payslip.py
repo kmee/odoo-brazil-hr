@@ -33,10 +33,7 @@ class L10nBrHrPayslip(models.Model):
         """
         # Holerite que esta sendo processado
         holerite_id = self.browse(payslip_id)
-        contract_id = holerite_id.contract_id
         salary_rule_obj = self.env['hr.salary.rule']
-        rubricas_especificas = \
-            holerite_id.get_contract_specific_rubrics(contract_id, [])
 
         # rubricas processadas pelo holerite
         result = super(L10nBrHrPayslip, self).get_payslip_lines(payslip_id)
@@ -52,11 +49,6 @@ class L10nBrHrPayslip(models.Model):
             if not hr_salary_rule_id.gerar_contabilizacao:
                 continue
 
-            if rule_id in rubricas_especificas:
-                # verificar codigo contabil definido na rubrica especifica
-                codigo_contabil = \
-                    rubricas_especificas.get(rule_id)[0].codigo_contabil
-
             # buscar diretamente na configuracao da rubrica
             if not codigo_contabil:
                 codigo_contabil = \
@@ -67,8 +59,8 @@ class L10nBrHrPayslip(models.Model):
                 codigo_contabil = payslip_line.get('code')
 
             # Adicionar o sufixo para contabilização definido no contrato
-            if contract_id.sufixo_code_account:
-                codigo_contabil += contract_id.sufixo_code_account
+            if holerite_id.contract_id.sufixo_code_account:
+                codigo_contabil += holerite_id.contract_id.sufixo_code_account
             payslip_line.update(codigo_contabil=codigo_contabil)
 
         return result
@@ -147,7 +139,8 @@ class L10nBrHrPayslip(models.Model):
             super(L10nBrHrPayslip, self).hr_verify_sheet()
 
             # Holerite fora do lote, gerar evento contabil individual
-            if holerite_id.tipo_de_folha in ['ferias', 'rescisao']:
+            if holerite_id.tipo_de_folha in \
+                    ['ferias', 'rescisao', 'rescisao_complementar']:
                 # Excluir se existir evento contabil
                 holerite_id.account_event_id.unlink()
                 # Gerar novo evento contabil
