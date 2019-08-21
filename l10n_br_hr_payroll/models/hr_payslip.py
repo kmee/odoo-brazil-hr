@@ -16,6 +16,19 @@ from openerp import api, fields, models, exceptions, _
 from openerp.tools import float_compare
 from mako.template import Template
 
+from .profiling import (
+    clear_prof_data,
+    log_prof_data,
+    profile
+)
+
+from openerp.addons.l10n_br_hr_payroll.constantes import (
+    CALCULATED_SPECIFC_RULE,
+    MES_DO_ANO,
+    MES_DO_ANO2,
+    TIPO_DE_FOLHA
+)
+
 _logger = logging.getLogger(__name__)
 
 try:
@@ -25,52 +38,6 @@ try:
 
 except ImportError:
     _logger.info('Cannot import pybrasil')
-
-MES_DO_ANO = [
-    (1, u'Janeiro'),
-    (2, u'Fevereiro'),
-    (3, u'Março'),
-    (4, u'Abril'),
-    (5, u'Maio'),
-    (6, u'Junho'),
-    (7, u'Julho'),
-    (8, u'Agosto'),
-    (9, u'Setembro'),
-    (10, u'Outubro'),
-    (11, u'Novembro'),
-    (12, u'Dezembro'),
-    (13, u'13º Salário'),
-]
-
-MES_DO_ANO2 = [
-    (1, u'Janeiro'),
-    (2, u'Fevereiro'),
-    (3, u'Março'),
-    (4, u'Abril'),
-    (5, u'Maio'),
-    (6, u'Junho'),
-    (7, u'Julho'),
-    (8, u'Agosto'),
-    (9, u'Setembro'),
-    (10, u'Outubro'),
-    (11, u'Novembro'),
-    (12, u'Dezembro'),
-]
-
-TIPO_DE_FOLHA = [
-    ('normal', u'Folha normal'),
-    ('rescisao', u'Rescisão'),
-    ('rescisao_complementar', u'Rescisão Complementar'),
-    ('ferias', u'Férias'),
-    ('decimo_terceiro', u'Décimo terceiro (13º)'),
-    ('aviso_previo', u'Aviso Prévio'),
-    ('provisao_ferias', u'Provisão de Férias'),
-    ('provisao_decimo_terceiro', u'Provisão de Décimo terceiro (13º)'),
-    ('licenca_maternidade', u'Licença maternidade'),
-    ('auxilio_doenca', u'Auxílio doença'),
-    ('auxílio_acidente_trabalho', u'Auxílio acidente de trabalho'),
-    ('rpa', u'Recibo de Pagamento a Autonômo'),
-]
 
 
 class HrPayslip(models.Model):
@@ -194,7 +161,9 @@ class HrPayslip(models.Model):
                 res = res + relativedelta(days=-2)
         return res.date()
 
+    @profile
     @api.multi
+    @api.depends('line_ids')
     def _compute_valor_total_folha(self):
         for holerite in self:
             total = 0.00
@@ -206,25 +175,25 @@ class HrPayslip(models.Model):
             fgts = 0.00
             inss = 0.00
             irpf = 0.00
-#            codigo = {}
-#            codigo['BASE_FGTS'] = \
-#                holerite.env\
-#                .ref('l10n_br_hr_payroll.hr_salary_rule_BASE_FGTS').code
-#            codigo['BASE_INSS'] = \
-#                holerite.env\
-#                .ref('l10n_br_hr_payroll.hr_salary_rule_BASE_INSS').code
-#            codigo['BASE_IRPF'] = \
-#                holerite.env\
-#                .ref('l10n_br_hr_payroll.hr_salary_rule_BASE_IRPF').code
-#            codigo['FGTS'] = \
-#                holerite.env\
-#                .ref('l10n_br_hr_payroll.hr_salary_rule_FGTS').code
-#            codigo['INSS'] = \
-#                holerite.env\
-#                .ref('l10n_br_hr_payroll.hr_salary_rule_INSS').code
-#            codigo['IRPF'] = \
-#                holerite.env\
-#                .ref('l10n_br_hr_payroll.hr_salary_rule_IRPF').code
+            #            codigo = {}
+            #            codigo['BASE_FGTS'] = \
+            #                holerite.env\
+            #                .ref('l10n_br_hr_payroll.hr_salary_rule_BASE_FGTS').code
+            #            codigo['BASE_INSS'] = \
+            #                holerite.env\
+            #                .ref('l10n_br_hr_payroll.hr_salary_rule_BASE_INSS').code
+            #            codigo['BASE_IRPF'] = \
+            #                holerite.env\
+            #                .ref('l10n_br_hr_payroll.hr_salary_rule_BASE_IRPF').code
+            #            codigo['FGTS'] = \
+            #                holerite.env\
+            #                .ref('l10n_br_hr_payroll.hr_salary_rule_FGTS').code
+            #            codigo['INSS'] = \
+            #                holerite.env\
+            #                .ref('l10n_br_hr_payroll.hr_salary_rule_INSS').code
+            #            codigo['IRPF'] = \
+            #                holerite.env\
+            #                .ref('l10n_br_hr_payroll.hr_salary_rule_IRPF').code
             for line in holerite.line_ids:
                 total += line.valor_provento - line.valor_deducao
                 total_proventos += line.valor_provento
@@ -266,15 +235,15 @@ class HrPayslip(models.Model):
             holerite.inss = inss
             holerite.irpf = irpf
             # Formato
-            holerite.data_admissao_fmt =\
+            holerite.data_admissao_fmt = \
                 data.formata_data(holerite.contract_id.date_start)
-            holerite.salario_base_fmt =\
+            holerite.salario_base_fmt = \
                 valor.formata_valor(holerite.contract_id.wage)
-            holerite.total_folha_fmt =\
+            holerite.total_folha_fmt = \
                 valor.formata_valor(holerite.total_folha)
-            holerite.total_proventos_fmt =\
+            holerite.total_proventos_fmt = \
                 valor.formata_valor(holerite.total_proventos)
-            holerite.total_descontos_fmt =\
+            holerite.total_descontos_fmt = \
                 valor.formata_valor(holerite.total_descontos)
             holerite.base_fgts_fmt = valor.formata_valor(holerite.base_fgts) \
                 if holerite.base_fgts > 0 else 0.00
@@ -610,20 +579,20 @@ class HrPayslip(models.Model):
 
     date_from = fields.Date(
         string='Date From',
-        #readonly=True,
-        #states={'draft': [('readonly', False)]},
+        # readonly=True,
+        # states={'draft': [('readonly', False)]},
         required=True,
-        #compute='_compute_set_dates',
-        #store=True,
+        # compute='_compute_set_dates',
+        # store=True,
     )
 
     date_to = fields.Date(
         string='Date To',
-        #readonly=True,
-        #states={'draft': [('readonly', False)]},
+        # readonly=True,
+        # states={'draft': [('readonly', False)]},
         required=True,
-        #compute='_compute_set_dates',
-        #store=True,
+        # compute='_compute_set_dates',
+        # store=True,
     )
 
     saldo_para_fins_rescisorios = fields.Float(
@@ -641,8 +610,8 @@ class HrPayslip(models.Model):
         comodel_name='hr.vacation.control',
         string="Período Aquisitivo",
         domain="[('contract_id','=',contract_id)]",
-        #compute='_compute_set_dates',
-        #store=True,
+        # compute='_compute_set_dates',
+        # store=True,
     )
 
     data_inicio_periodo_aquisitivo = fields.Date(
@@ -725,6 +694,7 @@ class HrPayslip(models.Model):
                     return rubrica.total
             return 0.0
 
+    @profile
     @api.multi
     def _set_aviso_previo_indenizado(self):
         """
@@ -734,6 +704,7 @@ class HrPayslip(models.Model):
         for record in self:
             pass
 
+    @profile
     @api.multi
     def buscar_pensao_alimenticia(self):
         """
@@ -770,6 +741,7 @@ class HrPayslip(models.Model):
         string="Forçar Saldo do Periodo Aquisitivo",
     )
 
+    @profile
     def get_attendances(self, nome, sequence, code, number_of_days,
                         number_of_hours, contract_id):
         attendance = {
@@ -895,7 +867,8 @@ class HrPayslip(models.Model):
             # get discount DSR
             quantity_DSR_discount = \
                 self.env['resource.calendar'].get_quantity_discount_DSR(
-                    leaves['faltas_nao_remuneradas'] + leaves['faltas_remuneradas'],
+                    leaves['faltas_nao_remuneradas'] + leaves[
+                        'faltas_remuneradas'],
                     hr_contract.working_hours.leave_ids, date_from, date_to)
 
             result += [self.get_attendances(
@@ -932,19 +905,19 @@ class HrPayslip(models.Model):
                 saldo_ferias = 0
                 if self.periodo_aquisitivo:
                     saldo_ferias = self.periodo_aquisitivo.saldo
-                #if self.tipo_de_folha in ['rescisao'] or fields.\
+                # if self.tipo_de_folha in ['rescisao'] or fields.\
                 #        Date.from_string(self.date_from) < fields.Date.\
                 #        from_string(self.periodo_aquisitivo.inicio_concessivo):
                 #    saldo_ferias = \
                 #        self.periodo_aquisitivo.dias_de_direito() *\
                 #        self.medias_proventos[0]['meses'] / 12.0
-                #else:
-                #if self.tipo_de_folha == 'ferias' and self.is_simulacao and \
+                # else:
+                # if self.tipo_de_folha == 'ferias' and self.is_simulacao and \
                 #        self.date_to and self.date_from:
                 #    dias_saldo = fields.Datetime.from_string(self.date_to) - \
                 #        fields.Datetime.from_string(self.date_from)
                 #    saldo_ferias = dias_saldo.days
-                #else:
+                # else:
                 #    saldo_ferias = self.periodo_aquisitivo.avos * 2.5
 
                 result += [
@@ -969,7 +942,8 @@ class HrPayslip(models.Model):
 
             result += [self.get_attendances(
                 u'Quantidade dias em Férias na Competência Atual', 38,
-                u'FERIAS_COMPETENCIA_ATUAL', quantidade_dias_ferias, 0.0, contract_id
+                u'FERIAS_COMPETENCIA_ATUAL', quantidade_dias_ferias, 0.0,
+                contract_id
             )]
 
             #
@@ -1014,7 +988,7 @@ class HrPayslip(models.Model):
             # GET Dias Trabalhados
             #
             quantidade_dias_trabalhados = \
-                dias_mes - leaves['quantidade_dias_faltas_nao_remuneradas'] -\
+                dias_mes - leaves['quantidade_dias_faltas_nao_remuneradas'] - \
                 quantity_DSR_discount - quantidade_dias_ferias
             result += [self.get_attendances(u'Dias Trabalhados', 36,
                                             u'DIAS_TRABALHADOS',
@@ -1063,9 +1037,10 @@ class HrPayslip(models.Model):
         # devera calcular com a remuneração alterada. Por isso na busca
         # do salario, levamos em conta o inicio e o fim do mes. O sistema entao
         # encontrara as alterações caso existam naquele mes
-        if self.tipo_de_folha in ['provisao_ferias', 'provisao_decimo_terceiro']:
+        if self.tipo_de_folha in ['provisao_ferias',
+                                  'provisao_decimo_terceiro']:
             date_from = str(self.ano).zfill(4) + '-' + \
-                         str(self.mes_do_ano).zfill(2) + '-01'
+                        str(self.mes_do_ano).zfill(2) + '-01'
             date_to = str(ultimo_dia_mes(date_from))
 
         salario_mes_final_dic = {
@@ -1082,6 +1057,7 @@ class HrPayslip(models.Model):
         res += [salario_hora_dic]
         return res
 
+    @profile
     def INSS(self, BASE_INSS):
         """
         Cálculo do INSS da folha de pagamento. Essa função é responsável por
@@ -1095,11 +1071,13 @@ class HrPayslip(models.Model):
         """
         tabela_inss_obj = self.env['l10n_br.hr.social.security.tax']
         if BASE_INSS:
-            inss, reference = tabela_inss_obj._compute_inss(BASE_INSS, self.date_from)
+            inss, reference = tabela_inss_obj._compute_inss(BASE_INSS,
+                                                            self.date_from)
             return inss, reference
         else:
             return 0, ' '
 
+    @profile
     def BASE_IRRF(self, TOTAL_IRRF, INSS):
         """
         Calcula a base de cálculo do IRRF. A formula se da por:
@@ -1117,6 +1095,7 @@ class HrPayslip(models.Model):
 
         return TOTAL_IRRF - INSS - dependent_values
 
+    @profile
     def get_dependent_values_irrf(self, ano):
         deducao_dependente_obj = self.env[
             'l10n_br.hr.income.tax.deductable.amount.family'
@@ -1131,6 +1110,7 @@ class HrPayslip(models.Model):
                 dependent_values += deducao_dependente_value.amount
         return dependent_values
 
+    @profile
     def IRRF(self, BASE_IRRF, INSS):
         tabela_irrf_obj = self.env['l10n_br.hr.income.tax']
         if BASE_IRRF:
@@ -1141,6 +1121,7 @@ class HrPayslip(models.Model):
         else:
             return 0, ' '
 
+    @profile
     def INSS_vinculo_cedente(self):
         """
         Verificar se no vínculo anterior já houve alguma contribuição com a
@@ -1151,8 +1132,8 @@ class HrPayslip(models.Model):
         period_id = self.env['account.period'].find(self.date_from)
 
         inss_vinculos_id = inss_vinculo_obj.search([
-            ('contrato_id','=', self.contract_id.id),
-            ('period_id','=', period_id.id),
+            ('contrato_id', '=', self.contract_id.id),
+            ('period_id', '=', period_id.id),
         ], limit=1)
 
         if inss_vinculos_id:
@@ -1160,6 +1141,7 @@ class HrPayslip(models.Model):
 
         return 0
 
+    @profile
     def MEDIA_RUBRICA(self, codigo, tipo_de_folha='normal'):
 
         final_periodo = '{}-{:02}-{:02}'.format(self.ano, self.mes_do_ano2, 1)
@@ -1178,7 +1160,8 @@ class HrPayslip(models.Model):
             if self.periodo_aquisitivo.fim_aquisitivo < final_periodo:
                 final_periodo = self.periodo_aquisitivo.fim_aquisitivo
 
-        elif self.tipo_de_folha in ['decimo_terceiro', 'provisao_decimo_terceiro']:
+        elif self.tipo_de_folha in ['decimo_terceiro',
+                                    'provisao_decimo_terceiro']:
             #
             # Calcular o período desejado e a quantidade de meses
             # Para ser usado no cálculo da média
@@ -1204,7 +1187,6 @@ class HrPayslip(models.Model):
         # e para o cálculo dos avos, foi aplicada a regra dos 15 dias de
         # trab.
         meses = 12
-
 
         domain = [
             ('contract_id', '=', self.contract_id.id),
@@ -1242,6 +1224,7 @@ class HrPayslip(models.Model):
 
         return media
 
+    @profile
     @api.multi
     def get_contract_specific_rubrics(
             self, applied_specific_rule, rule_ids, DIAS_A_MAIOR):
@@ -1270,7 +1253,6 @@ class HrPayslip(models.Model):
                 if self.date_from >= specific_rule.date_start:
                     if not specific_rule.date_stop or \
                             self.date_to <= specific_rule.date_stop:
-
                         rule_ids.append((specific_rule.rule_id.id,
                                          specific_rule.rule_id.sequence))
 
@@ -1279,11 +1261,22 @@ class HrPayslip(models.Model):
                             'rule_id': specific_rule,
                             'beneficiario_id': specific_rule.partner_id,
                             'ref': specific_rule.ref,
+                            'value': (
+                                specific_rule.specific_quantity *
+                                specific_rule.specific_percentual / 100 *
+                                specific_rule.specific_amount,
+
+                                specific_rule.specific_quantity,
+
+                                specific_rule.specific_percentual,
+                                specific_rule.ref
+                            )
                         }
                         applied_specific_rule[specific_rule.rule_id.id].append(
                             specific
                         )
 
+    @profile
     def get_ferias_rubricas(self, payslip, rule_ids):
         holerite_ferias = self.search([
             ('tipo_de_folha', '=', 'ferias'),
@@ -1300,6 +1293,7 @@ class HrPayslip(models.Model):
                     (line.salary_rule_id.id, line.salary_rule_id.sequence))
         return rule_ids, holerite_ferias.holidays_ferias
 
+    @profile
     def buscar_ferias_do_mes(self, payslip):
         """
         Buscar holerite de ferias que tem o inicio dentro do mes da competencia
@@ -1322,7 +1316,7 @@ class HrPayslip(models.Model):
             return False, False
         return lines, holerite_ferias.holidays_ferias
 
-
+    @profile
     def get_specific_rubric_value(self, rubrica_id, references=False):
         """
         Função dísponivel para as regras de salario, que busca o valor das
@@ -1342,8 +1336,7 @@ class HrPayslip(models.Model):
             if rubrica.rule_id.id == rubrica_id \
                     and rubrica.date_start <= self.date_from and \
                     (not rubrica.date_stop or rubrica.date_stop >=
-                        self.date_to):
-
+                     self.date_to):
                 return (
                     rubrica.specific_quantity *
                     rubrica.specific_percentual / 100 *
@@ -1356,6 +1349,7 @@ class HrPayslip(models.Model):
                 )
         return 0
 
+    @profile
     @api.multi
     def get_desconto_ligacao_telefonica(self):
         """
@@ -1370,10 +1364,10 @@ class HrPayslip(models.Model):
             holerite_id.ligacoes_ids = False
 
             domain = [
-                ('state','=','validate'),
-                ('tipo','=','particular'),
-                ('employee_id','=', holerite_id.contract_id.employee_id.id),
-                ('payslip_id','=', False)
+                ('state', '=', 'validate'),
+                ('tipo', '=', 'particular'),
+                ('employee_id', '=', holerite_id.contract_id.employee_id.id),
+                ('payslip_id', '=', False)
             ]
             ligacoes_ids = ligacao_obj.search(domain)
             if ligacoes_ids:
@@ -1383,6 +1377,7 @@ class HrPayslip(models.Model):
                 return sum(ligacoes_ids.mapped('valor'))
             return 0.0
 
+    @profile
     @api.multi
     def _buscar_valor_salario(self, codigo):
         for tipo_salario in self.input_line_ids:
@@ -1390,6 +1385,7 @@ class HrPayslip(models.Model):
                 return tipo_salario.amount
         return 0.00
 
+    @profile
     @api.multi
     def _get_rat_fap_period_values(self, year):
         rat_fap_obj = self.env['l10n_br.hr.rat.fap']
@@ -1403,6 +1399,7 @@ class HrPayslip(models.Model):
                 _('Can\'t find this year values in Rat Fap Table')
             )
 
+    @profile
     @api.multi
     def buscar_estruturas_salario(self):
         if self.tipo_de_folha in \
@@ -1452,6 +1449,7 @@ class HrPayslip(models.Model):
             ], order='fim_aquisitivo desc')
             return periodo_ferias_vencida
 
+    @profile
     @api.multi
     def gerar_simulacao(
             self, tipo_simulacao, mes_do_ano, ano, data_inicio, data_fim,
@@ -1472,18 +1470,18 @@ class HrPayslip(models.Model):
 
         payslip_simulacao_criada = self.create(vals)
         if tipo_simulacao == "ferias":
-            #periodo_ferias_vencida = False
-            #if ferias_vencida:
+            # periodo_ferias_vencida = False
+            # if ferias_vencida:
             #    periodo_ferias_vencida = self._verificar_ferias_vencidas()
             payslip_simulacao_criada.write(
                 {
                     'periodo_aquisitivo': periodo_aquisitivo.id
-               #         self.contract_id.vacation_control_ids[0].id if
-               #         not periodo_ferias_vencida else
-               #         periodo_ferias_vencida.id
+                    #         self.contract_id.vacation_control_ids[0].id if
+                    #         not periodo_ferias_vencida else
+                    #         periodo_ferias_vencida.id
                 }
             )
-            #payslip_simulacao_criada._compute_saldo_periodo_aquisitivo()
+            # payslip_simulacao_criada._compute_saldo_periodo_aquisitivo()
 
         if tipo_simulacao in ["ferias", "aviso_previo"]:
             payslip_simulacao_criada.gerar_media_dos_proventos()
@@ -1508,6 +1506,7 @@ class HrPayslip(models.Model):
         payslip_simulacao_criada.write({'paid': True, 'state': 'done'})
         return payslip_simulacao_criada
 
+    @profile
     @api.multi
     def _buscar_valor_bruto_simulacao(
             self, payslip_simulacao, um_terco_ferias=None):
@@ -1526,6 +1525,7 @@ class HrPayslip(models.Model):
                 if line.salary_rule_id.category_id.id == categoria_bruto.id:
                     return line.total
 
+    @profile
     @api.multi
     def _checar_datas_gerar_simulacoes(self, mes_do_ano, ano):
         if mes_do_ano > 1:
@@ -1538,6 +1538,7 @@ class HrPayslip(models.Model):
         data_fim = str(ano) + "-" + str(mes_do_ano) + "-" + str(dias_no_mes[1])
         return mes_do_ano, ano, data_inicio, data_fim
 
+    @profile
     def _simulacao_ferias(self, ferias_vencida, um_terco_ferias):
 
         #
@@ -1558,11 +1559,12 @@ class HrPayslip(models.Model):
         self.contract_id.atualizar_data_demissao()
 
         periodo = self.env['hr.vacation.control'].with_context(
-            data_fim = self.data_afastamento).browse(periodo_id)
+            data_fim=self.data_afastamento).browse(periodo_id)
 
         if periodo.saldo:
             data_inicio = self.data_afastamento
-            data_fim = data.parse_datetime(data_inicio) + relativedelta(days=periodo.avos * 2.5)
+            data_fim = data.parse_datetime(data_inicio) + relativedelta(
+                days=periodo.avos * 2.5)
 
             domain = [
                 ('tipo_de_folha', '=', 'ferias'),
@@ -1582,6 +1584,7 @@ class HrPayslip(models.Model):
             return self._buscar_valor_bruto_simulacao(
                 payslip_simulacao_criada, um_terco_ferias)
 
+    @profile
     def _simulacao_decimo_terceiro(self):
 
         data_inicio = self.data_afastamento
@@ -1605,16 +1608,17 @@ class HrPayslip(models.Model):
 
         return self._buscar_valor_bruto_simulacao(payslip_simulacao_criada)
 
+    @profile
     @api.multi
     def BUSCAR_VALOR_PROPORCIONAL(
             self, tipo_simulacao, um_terco_ferias=None, ferias_vencida=None):
 
         # Se simulação férias, faça e saia
         # (ignorando o resto do método, precisa refatorar) (TODO)
-        if tipo_simulacao=='ferias':
+        if tipo_simulacao == 'ferias':
             return self._simulacao_ferias(ferias_vencida, um_terco_ferias)
 
-        if tipo_simulacao=='decimo_terceiro':
+        if tipo_simulacao == 'decimo_terceiro':
             return self._simulacao_decimo_terceiro()
 
         mes_verificacao, ano_verificacao, data_inicio, data_fim = \
@@ -1686,12 +1690,12 @@ class HrPayslip(models.Model):
             #
             for payslip in payslip_simulacao:
                 payslip.unlink()
-            #raise exceptions.Warning(
+            # raise exceptions.Warning(
             #    _(
             #        'Existem duas simulações '
             #        'para %s neste período' % tipo_simulacao
             #    )
-            #)
+            # )
             payslip_simulacao = self.env['hr.payslip'].search(domain)
 
         if len(payslip_simulacao) == 0:
@@ -1713,6 +1717,7 @@ class HrPayslip(models.Model):
     #         if rubrica.name == media.nome_rubrica:
     #             return media.media
 
+    @profile
     @api.multi
     def verificar_adiantamento_13_aviso_ferias(self):
         """
@@ -1727,7 +1732,7 @@ class HrPayslip(models.Model):
                 ('contract_id', '=', self.contract_id.id),
                 ('date_from', '>=', str(self.ano) + '-01-01'),
                 ('date_to', '<=', self.date_to),
-                ('state', 'in', ['done','verify']),
+                ('state', 'in', ['done', 'verify']),
                 ('is_simulacao', '=', False),
             ]
         )
@@ -1744,6 +1749,7 @@ class HrPayslip(models.Model):
         )
         return payslip_line_id
 
+    @profile
     @api.multi
     def BUSCAR_ADIANTAMENTO_DECIMO_TERCEIRO(self):
         """
@@ -1753,6 +1759,7 @@ class HrPayslip(models.Model):
         payslip_line_id = self.verificar_adiantamento_13_aviso_ferias()
         return payslip_line_id.total
 
+    @profile
     @api.multi
     def verificar_ferias_no_periodo(self):
         """
@@ -1779,6 +1786,7 @@ class HrPayslip(models.Model):
                 total += line.total
         return total
 
+    @profile
     @api.multi
     def BUSCAR_ADIANTAMENTO_FERIAS(self):
         """
@@ -1788,6 +1796,7 @@ class HrPayslip(models.Model):
         """
         return self.verificar_ferias_no_periodo()
 
+    @profile
     @api.multi
     def BUSCAR_PRIMEIRA_PARCELA(self):
         primeira_parcela_struct_id = self.env.ref(
@@ -1813,6 +1822,7 @@ class HrPayslip(models.Model):
                 return line.total
         return 0
 
+    @profile
     def get_reference(self, competencia='atual'):
         """
         Definir referência da Rubrica
@@ -1827,6 +1837,7 @@ class HrPayslip(models.Model):
         referencia = '{}-{}'.format(referencia[-2:], referencia[:4])
         return referencia
 
+    @profile
     def get_hr_payslip_line_by_code(self, code, reference):
         """
         Buscar linha calculada do holerite
@@ -1836,8 +1847,8 @@ class HrPayslip(models.Model):
         """
         domain = [
             ('contract_id', '=', self.contract_id.id),
-            ('code','ilike', '%{}%'.format(code)),
-            ('reference','=', reference),
+            ('code', 'ilike', '%{}%'.format(code)),
+            ('reference', '=', reference),
         ]
         if self.tipo_de_folha == 'normal':
             domain.append(('slip_id.tipo_de_folha', '=', 'ferias'))
@@ -1845,7 +1856,7 @@ class HrPayslip(models.Model):
         line_ids = self.env['hr.payslip.line'].search(domain)
         return sum(line_ids.mapped('total'))
 
-
+    @profile
     def get_inss_ferias_da_competencia(self, reference):
         """
         Buscar o valor de INSS pago na competencia que vier nos parâmetros
@@ -1862,7 +1873,7 @@ class HrPayslip(models.Model):
             ano_inicial = reference_ano
 
         data_inicial = '{}-{}-01'.format(ano_inicial, mes_inicial)
-        data_final = '{}-{}-01'.format(reference_ano, reference_mes+1)
+        data_final = '{}-{}-01'.format(reference_ano, reference_mes + 1)
 
         domain = [
             ('tipo_de_folha', 'in', ['ferias']),
@@ -1891,6 +1902,7 @@ class HrPayslip(models.Model):
 
         return 0.0
 
+    @profile
     def busca_adiantamento_13(self):
         '''Metodo para recuperar valor pago de adiantamento de 13º no ano
         :return:     float - Valor pago neste ano
@@ -1935,6 +1947,7 @@ class HrPayslip(models.Model):
         # retorne o valor cadastrado no contrato
         # return self.contract_id.adiantamento_13_cedente or 0.0
 
+    @profile
     def rubrica_anterior_total(self, code, mes=-1, tipo_de_folha='normal'):
         '''Metodo para recuperar uma rubrica de um mes anterior
         :param code:  string -   Code de identificação da rubrica
@@ -1969,7 +1982,9 @@ class HrPayslip(models.Model):
         holerite = self.search(domain, order='date_from DESC', limit=1)
 
         if holerite and self.tipo_de_folha in ['rescisao', 'decimo_terceiro']:
-            return sum(holerite.line_ids.filtered(lambda x: x.code == code).mapped('total')) or 0.0
+            return sum(
+                holerite.line_ids.filtered(lambda x: x.code == code).mapped(
+                    'total')) or 0.0
 
         valores = 0
         if holerite:
@@ -1981,6 +1996,7 @@ class HrPayslip(models.Model):
 
         return valores
 
+    @profile
     def rubrica_pensao_alimentar(self):
         '''
         :param code:  string -   Code de identificação da rubrica
@@ -2024,6 +2040,7 @@ class HrPayslip(models.Model):
                         valores += line.total
         return valores
 
+    @profile
     @api.multi
     def get_payslip_lines(self, payslip_id):
         """
@@ -2034,6 +2051,7 @@ class HrPayslip(models.Model):
                 self : Id do contract
         :return:
         """
+
         def _sum_salary_rule_category(localdict, category, amount):
             if category.parent_id:
                 localdict = _sum_salary_rule_category(
@@ -2054,6 +2072,7 @@ class HrPayslip(models.Model):
         class InputLine(BrowsableObject):
             """a class that will be used into the python code,
             mainly for usability purposes"""
+
             def sum(self, code, from_date, to_date=None):
                 if to_date is None:
                     to_date = datetime.now().strftime('%Y-%m-%d')
@@ -2070,6 +2089,7 @@ class HrPayslip(models.Model):
         class WorkedDays(BrowsableObject):
             """a class that will be used into the python code, mainly
             for usability purposes"""
+
             def _sum(self, code, from_date, to_date=None):
                 if to_date is None:
                     to_date = datetime.now().strftime('%Y-%m-%d')
@@ -2114,10 +2134,8 @@ class HrPayslip(models.Model):
         result_dict = {}
         rules = {}
         categories_dict = {}
-        blacklist = []
         payslip_obj = self.env['hr.payslip']
         obj_rule = self.env['hr.salary.rule']
-        rubricas_spec_model = self.env['hr.contract.salary.rule']
         payslip = payslip_obj.browse(payslip_id)
         worked_days = {}
         for worked_days_line in payslip.worked_days_line_ids:
@@ -2197,7 +2215,7 @@ class HrPayslip(models.Model):
         # contratação: 31/05/2017 -> avos_13 = (mescorrente - 05) -1  = 6
         # contratação: 31/05/2016 -> avos_13 = mes corrente -1 = 11
         if fields.Date.from_string(payslip.contract_id.date_start) > \
-                fields.Date.from_string(str(payslip.ano)+'-01-01'):
+                fields.Date.from_string(str(payslip.ano) + '-01-01'):
 
             dia_inicio_contrato = \
                 fields.Date.from_string(payslip.contract_id.date_start).day
@@ -2211,7 +2229,9 @@ class HrPayslip(models.Model):
             # Se trabalhou mais do que 15 dias no mes, contar o mes nos avos
             # de adiantamento de 13 salario. Senao trabalhou pelo menos 15
             # dias na data de contratacao, diminuir um avo da contabilidade dos avos
-            ultimo_dia = fields.Date.from_string(payslip.contract_id.date_end).day if payslip.contract_id.date_end else ultimo_dia_mes(payslip.contract_id.date_start).day
+            ultimo_dia = fields.Date.from_string(
+                payslip.contract_id.date_end).day if payslip.contract_id.date_end else ultimo_dia_mes(
+                payslip.contract_id.date_start).day
             if not ultimo_dia - dia_inicio_contrato + 1 >= 15:
                 avos_13 -= 1
                 adiantamento_avos_13 -= 1
@@ -2296,7 +2316,7 @@ class HrPayslip(models.Model):
             structure_ids).get_all_rules()
 
         applied_specific_rule = defaultdict(list)
-        
+
         payslip.get_contract_specific_rubrics(
             applied_specific_rule, rule_ids, DIAS_A_MAIOR)
 
@@ -2309,7 +2329,8 @@ class HrPayslip(models.Model):
         if holidays_ferias and worked_days_obj.FERIAS.number_of_days > 0 \
                 and payslip.tipo_de_folha == 'normal':
             # Atualiza o Holerite para colocar o holidays_ferias correspondente
-            self.env['hr.payslip'].browse(payslip_id).holidays_ferias = holidays_ferias
+            self.env['hr.payslip'].browse(
+                payslip_id).holidays_ferias = holidays_ferias
             # Atualizar o baselocaldict para informar que tem que pagar
             # ferias naquele holerite
             baselocaldict.update({'PAGAR_FERIAS': True})
@@ -2384,19 +2405,19 @@ class HrPayslip(models.Model):
                     line.total)
 
                 if line.category_id.code == 'DEDUCAO':
-                   if line.salary_rule_id.compoe_base_INSS:
-                       baselocaldict['BASE_INSS'] -= line.total
-                   if line.salary_rule_id.compoe_base_IR:
-                       baselocaldict['BASE_IR'] -= line.total
-                   if line.salary_rule_id.compoe_base_FGTS:
-                       baselocaldict['BASE_FGTS'] -= line.total
+                    if line.salary_rule_id.compoe_base_INSS:
+                        baselocaldict['BASE_INSS'] -= line.total
+                    if line.salary_rule_id.compoe_base_IR:
+                        baselocaldict['BASE_IR'] -= line.total
+                    if line.salary_rule_id.compoe_base_FGTS:
+                        baselocaldict['BASE_FGTS'] -= line.total
                 else:
-                   if line.salary_rule_id.compoe_base_INSS:
-                       baselocaldict['BASE_INSS'] += line.total
-                   if line.salary_rule_id.compoe_base_IR:
-                       baselocaldict['BASE_IR'] += line.total
-                   if line.salary_rule_id.compoe_base_FGTS:
-                       baselocaldict['BASE_FGTS'] += line.total
+                    if line.salary_rule_id.compoe_base_INSS:
+                        baselocaldict['BASE_INSS'] += line.total
+                    if line.salary_rule_id.compoe_base_IR:
+                        baselocaldict['BASE_IR'] += line.total
+                    if line.salary_rule_id.compoe_base_FGTS:
+                        baselocaldict['BASE_FGTS'] += line.total
 
                 # Cria ajuste de INSS (Provento) proporcional às ferias
                 # Como ja foi pago o INSS no aviso de ferias, É criado
@@ -2423,8 +2444,6 @@ class HrPayslip(models.Model):
             [id for id, sequence in sorted(rule_ids, key=lambda x: x[1])]
 
         # organizando as regras especificas pela ordem definida
-
-        applied_specific_rule = self.sort_specific_rules(applied_specific_rule)
 
         if payslip.tipo_de_folha == "rescisao":
             if not payslip.verificar_adiantamento_13_aviso_ferias():
@@ -2485,12 +2504,8 @@ class HrPayslip(models.Model):
         employee = payslip.contract_id.employee_id
         localdict = dict(
             baselocaldict, employee=employee, contract=payslip.contract_id)
-        calculated_specifc_rule = [
-            'PENSAO_ALIMENTICIA_PORCENTAGEM',
-            'PENSAO_ALIMENTICIA_PORCENTAGEM_FERIAS',
-            'PENSAO_ALIMENTICIA_PORCENTAGEM_13',
-        ]
-        references = {}
+
+        references = defaultdict(list)
 
         for rule in obj_rule.browse(sorted_rule_ids):
             localdict['result'] = None
@@ -2498,146 +2513,136 @@ class HrPayslip(models.Model):
             localdict['result_rate'] = 100
             localdict['rubrica'] = rule
             localdict['reference'] = ' '
-            id_rubrica_especifica = 0
             beneficiario_id = False
             ref = False
             amount = False
             qty = False
             rate = False
 
-            # #
-            # # Tratamos as rubricas específicas que têm beneficiários
-            # #
-            if rule.id in applied_specific_rule:
+            # check if the rule can be applied
+            if not (rule.id in applied_specific_rule or \
+                    obj_rule.satisfy_condition(rule.id, localdict)):
+                continue
+
+            # compute the amount of the rule
+            if rule.id in applied_specific_rule and \
+                    rule.code not in CALCULATED_SPECIFC_RULE:
 
                 lista_rubricas_especificas = applied_specific_rule[rule.id]
 
-                if len(lista_rubricas_especificas) > 0:
-                    rubrica_especifica = lista_rubricas_especificas[0]
+                # Verifica quais rúbricas especificas devem ser aplicadas
+                for specific_item in lista_rubricas_especificas:
+                    #
+                    # Aplicando regra do benecicio;
+                    #
+                    if (specific_item.get('type') == u'benefit'and not (
+                            specific_item.get('ref') and
+                            specific_item['ref'] in references.get(rule.id))):
 
-                    beneficiario_id = rubrica_especifica.get(
-                      'beneficiario_id'
-                    )
+                        amount, qty, rate, ref = specific_item['value']
 
-                    del lista_rubricas_especificas[0]
+                        del lista_rubricas_especificas[0]
+                        applied_specific_rule[rule.id] = \
+                            lista_rubricas_especificas
 
-                    applied_specific_rule[rule.id] = \
-                        lista_rubricas_especificas
+                        break
+                    #
+                    # Aplicando regra especifica do contrato
+                    #
+                    elif (specific_item.get('type') == u'contract' and not (
+                            specific_item.get('ref') and
+                            specific_item['ref'] in references.get(rule.id))):
+                        amount, qty, rate, ref = specific_item['value']
 
-                print "Especificas"
-                print lista_rubricas_especificas
-                print "Aplicadas"
-                print applied_specific_rule
+                        del lista_rubricas_especificas[0]
+                        applied_specific_rule[rule.id] = \
+                            lista_rubricas_especificas
 
-            # check if the rule can be applied
-            if rule.id in applied_specific_rule or \
-                    obj_rule.satisfy_condition(rule.id, localdict):
-                # compute the amount of the rule
-                if rule.id in applied_specific_rule and \
-                        rule.code not in calculated_specifc_rule:
-                    amount, qty, rate, ref = \
-                        payslip.get_specific_rubric_value(
-                            rule.id, references=references)
-
-                if not (amount or qty or rate):
-                    amount, qty, rate = \
-                        obj_rule.compute_rule(rule.id, localdict)
-
-                # Pegar Referencia que irá para o holerite
-                reference = obj_rule.get_reference_rubrica(rule.id, localdict)
-                if ref:
-                    reference = ref
-
-                if references.get(rule.id):
-                    references[rule.id].append(reference)
-                else:
-                    references[rule.id] = [reference]
-
-                # se ja tiver sido calculado a media dessa rubrica,
-                # utilizar valor da media e multiplicar
-                # pela reinciden.
-                if medias.get(rule.code) and \
-                        not payslip.tipo_de_folha == 'aviso' \
-                                                     '_previo':
-                    amount = medias.get(rule.code).media / 12
-                    qty = medias.get(rule.code).meses
-                    rule.name += ' (Media) '
-                # check if there is already a rule computed
-                # with that code
-                previous_amount = \
-                    rule.code in localdict and \
-                    localdict[rule.code] or 0.0
-                # previous_amount = 0
-                # set/overwrite the amount computed
-                # for this rule in the localdict
-
-                tot_rule = Decimal(amount or 0) * Decimal(
-                    qty or 0) * Decimal(rate or 0) / 100.0
-                tot_rule = tot_rule.quantize(Decimal('0.01'))
-                if localdict.get(rule.code) and \
-                        rule.category_id.code == 'PROVENTO':
-                    localdict[rule.code] += tot_rule
-                else:
-                    localdict[rule.code] = tot_rule
-
-                if rules.get(rule.code) and rule.category_id.code == 'PROVENTO':
-                    rules[rule.code] += rule
-                else:
-                    rules[rule.code] = rule
-
-                # Adiciona a rubrica especifica ao localdict
-                if id_rubrica_especifica:
-                    localdict['RUBRICAS_ESPEC_CALCULADAS'].append(
-                        id_rubrica_especifica)
-
-                # sum the amount for its salary category
-                localdict = _sum_salary_rule_category(
-                    localdict, rule.category_id,
-                    tot_rule)
-
-                # create/overwrite the rule in the temporary results
-                result_dict[random.randint(0, 10000)] = {
-                    'salary_rule_id': rule.id,
-                    'contract_id': payslip.contract_id.id,
-                    'name': rule.name,
-                    'code': rule.code,
-                    'category_id': rule.category_id.id,
-                    'sequence': rule.sequence,
-                    'appears_on_payslip': rule.appears_on_payslip,
-                    'condition_select': rule.condition_select,
-                    'condition_python': rule.condition_python,
-                    'condition_range': rule.condition_range,
-                    'condition_range_min':
-                        rule.condition_range_min,
-                    'condition_range_max':
-                        rule.condition_range_max,
-                    'amount_select': rule.amount_select,
-                    'amount_fix': rule.amount_fix,
-                    'amount_python_compute':
-                        rule.amount_python_compute,
-                    'amount_percentage': rule.amount_percentage,
-                    'amount_percentage_base':
-                        rule.amount_percentage_base,
-                    'register_id': rule.register_id.id,
-                    'amount': amount,
-                    'employee_id': payslip.contract_id.employee_id.id,
-                    'quantity': qty,
-                    'rate': rate,
-                    'reference': reference,
-                    'partner_id':
-                        beneficiario_id and beneficiario_id.id or
-                        payslip.contract_id.employee_id.address_home_id and
-                        payslip.contract_id.employee_id.address_home_id.id or
-                        False
-                    ,
-
-                }
+                        break
 
             else:
-                rules_seq = rule._model._recursive_search_of_rules(
-                    self._cr, self._uid, rule, self._context)
-                blacklist += [id for id, seq in rules_seq]
-                continue
+                amount, qty, rate = \
+                    obj_rule.compute_rule(rule.id, localdict)
+
+                # Pegar Referencia que irá para o holerite
+                ref = obj_rule.get_reference_rubrica(
+                    rule.id, localdict
+                )
+
+            references[rule.id].append(ref)
+
+            # se ja tiver sido calculado a media dessa rubrica,
+            # utilizar valor da media e multiplicar
+            # pela reinciden.
+            if medias.get(rule.code) and \
+                    not payslip.tipo_de_folha == 'aviso_previo':
+                amount = medias.get(rule.code).media / 12
+                qty = medias.get(rule.code).meses
+                rule.name += ' (Media) '
+            # check if there is already a rule computed
+            # with that code
+            previous_amount = \
+                rule.code in localdict and \
+                localdict[rule.code] or 0.0
+            # previous_amount = 0
+            # set/overwrite the amount computed
+            # for this rule in the localdict
+
+            tot_rule = Decimal(amount or 0) * Decimal(
+                qty or 0) * Decimal(rate or 0) / 100.0
+            tot_rule = tot_rule.quantize(Decimal('0.01'))
+            if localdict.get(rule.code) and \
+                    rule.category_id.code == 'PROVENTO':
+                localdict[rule.code] += tot_rule
+            else:
+                localdict[rule.code] = tot_rule
+
+            if rules.get(rule.code) and rule.category_id.code == 'PROVENTO':
+                rules[rule.code] += rule
+            else:
+                rules[rule.code] = rule
+
+            # sum the amount for its salary category
+            localdict = _sum_salary_rule_category(
+                localdict, rule.category_id,
+                tot_rule)
+
+            # create/overwrite the rule in the temporary results
+            result_dict[random.randint(0, 10000)] = {
+                'salary_rule_id': rule.id,
+                'contract_id': payslip.contract_id.id,
+                'name': rule.name,
+                'code': rule.code,
+                'category_id': rule.category_id.id,
+                'sequence': rule.sequence,
+                'appears_on_payslip': rule.appears_on_payslip,
+                'condition_select': rule.condition_select,
+                'condition_python': rule.condition_python,
+                'condition_range': rule.condition_range,
+                'condition_range_min':
+                    rule.condition_range_min,
+                'condition_range_max':
+                    rule.condition_range_max,
+                'amount_select': rule.amount_select,
+                'amount_fix': rule.amount_fix,
+                'amount_python_compute':
+                    rule.amount_python_compute,
+                'amount_percentage': rule.amount_percentage,
+                'amount_percentage_base':
+                    rule.amount_percentage_base,
+                'register_id': rule.register_id.id,
+                'amount': amount,
+                'employee_id': payslip.contract_id.employee_id.id,
+                'quantity': qty,
+                'rate': rate,
+                'reference': ref,
+                'partner_id':
+                    beneficiario_id and beneficiario_id.id or
+                    payslip.contract_id.employee_id.address_home_id and
+                    payslip.contract_id.employee_id.address_home_id.id or
+                    False
+                ,
+            }
 
             if rule.category_id.code == 'DEDUCAO':
                 if rule.compoe_base_INSS:
@@ -2657,6 +2662,7 @@ class HrPayslip(models.Model):
         result = [value for code, value in result_dict.items()]
         return result
 
+    @profile
     def atualizar_worked_days_inputs(self):
         """
         Atualizar os campos worked_days_line_ids e input_line_ids do holerite.
@@ -2701,11 +2707,12 @@ class HrPayslip(models.Model):
     def _compute_data_mes_ano(self):
         for record in self:
             record.data_mes_ano = MES_DO_ANO[record.mes_do_ano - 1][1][:3] + \
-                '/' + str(record.ano)
+                                  '/' + str(record.ano)
 
     # @api.depends('mes_do_ano', 'ano', 'holidays_ferias', 'data_afastamento')
     @api.multi
-    @api.onchange('mes_do_ano', 'ano', 'data_afastamento', 'date_from', 'date_to', 'holidays_ferias')
+    @api.onchange('mes_do_ano', 'ano', 'data_afastamento', 'date_from',
+                  'date_to', 'holidays_ferias')
     def _compute_set_dates(self):
         for record in self:
             if not record.mes_do_ano:
@@ -2713,7 +2720,7 @@ class HrPayslip(models.Model):
                 record.mes_do_ano2 = datetime.now().month
             if record.tipo_de_folha == 'ferias' and record.holidays_ferias:
                 if record.holidays_ferias.parent_id.controle_ferias_ids:
-                    record.periodo_aquisitivo =\
+                    record.periodo_aquisitivo = \
                         record.holidays_ferias.parent_id.controle_ferias_ids[0]
                 record.date_from = record.holidays_ferias.data_inicio
                 record.date_to = record.holidays_ferias.data_fim
@@ -2722,7 +2729,7 @@ class HrPayslip(models.Model):
                 record.ano = \
                     datetime.strptime(record.date_from, '%Y-%m-%d').year
                 continue
-            if record.tipo_de_folha =='provisao_ferias':
+            if record.tipo_de_folha == 'provisao_ferias':
                 continue
 
             mes = record.mes_do_ano
@@ -2756,7 +2763,8 @@ class HrPayslip(models.Model):
             if record.tipo_de_folha != 'rescisao':
                 return
 
-            if record.data_afastamento and record.data_afastamento < ultimo_dia_do_mes and not record.data_afastamento == primeiro_dia_do_mes[:10]:
+            if record.data_afastamento and record.data_afastamento < ultimo_dia_do_mes and not record.data_afastamento == primeiro_dia_do_mes[
+                                                                                                                          :10]:
                 record.date_to = \
                     fields.Date.from_string(record.data_afastamento) - \
                     timedelta(days=1)
@@ -2779,6 +2787,7 @@ class HrPayslip(models.Model):
                 record.date_to = record.data_afastamento
                 record.date_from = record.data_afastamento
 
+    @profile
     @api.multi
     def _buscar_holerites_periodo_aquisitivo(self):
         if not self.periodo_aquisitivo:
@@ -2793,6 +2802,7 @@ class HrPayslip(models.Model):
             ])
             return payslips
 
+    @profile
     @api.multi
     def _checar_holerites_aprovados(self):
         return self.search([
@@ -2803,6 +2813,17 @@ class HrPayslip(models.Model):
 
     @api.multi
     def compute_sheet(self):
+        for record in self:
+            clear_prof_data()
+            record._compute_sheet()
+            log_prof_data()
+            clear_prof_data()
+
+    @profile
+    @api.multi
+    def _compute_sheet(self):
+        self.ensure_one()
+
         if self.tipo_de_folha == "rescisao":
 
             # Excluir todas as simulações pré-existentes referentes a esta
@@ -2819,13 +2840,13 @@ class HrPayslip(models.Model):
                 simulacoes.unlink()
 
         if self.tipo_de_folha in [
-                "decimo_terceiro", "ferias", "aviso_previo",
-                "provisao_ferias", "provisao_decimo_terceiro"
+            "decimo_terceiro", "ferias", "aviso_previo",
+            "provisao_ferias", "provisao_decimo_terceiro"
         ]:
             hr_medias_ids, data_de_inicio, data_final = \
                 self.gerar_media_dos_proventos()
 
-            if not self.tipo_de_folha == 'ferias' and not self.\
+            if not self.tipo_de_folha == 'ferias' and not self. \
                     _buscar_holerites_periodo_aquisitivo():
 
                 # Metodo pra validar se ja foram processadors
@@ -2853,10 +2874,11 @@ class HrPayslip(models.Model):
 
         self.atualizar_worked_days_inputs()
         super(HrPayslip, self).compute_sheet()
-        self._compute_valor_total_folha()
+        # self._compute_valor_total_folha()
         self._compute_rescisao_ids()
         return True
 
+    @profile
     def _compute_rescisao_ids(self):
         self.rescisao_ids.unlink()
         rescisao_ids = []
@@ -2900,7 +2922,8 @@ class HrPayslip(models.Model):
 
                     # Interpreta as variáveis na descrição
                     if self.contract_id.wage != 0.0:
-                        avos = line['valor_provento'] / (self.contract_id.wage / 12)
+                        avos = line['valor_provento'] / (
+                                    self.contract_id.wage / 12)
 
                     name = line.salary_rule_id.campo_rescisao.descricao
 
@@ -2927,6 +2950,7 @@ class HrPayslip(models.Model):
                     })
         self.rescisao_ids = rescisao_ids
 
+    @profile
     def validacao_holerites_anteriores(self, data_inicio, data_fim, contrato):
         """
         VAlida se existe todos os holerites calculados e confirmados em
@@ -2967,6 +2991,7 @@ class HrPayslip(models.Model):
         #         (MES_DO_ANO[mes - 1][1],
         #          fields.Datetime.from_string(data_fim).year))
 
+    @profile
     @api.multi
     def gerar_media_dos_proventos(self):
         medias_obj = self.env['l10n_br.hr.medias']
@@ -2995,9 +3020,10 @@ class HrPayslip(models.Model):
             data_de_inicio, data_final, self)
         return hr_medias_ids, data_de_inicio, data_final
 
+    @profile
     @api.model
     def BUSCAR_VALOR_MEDIA_PROVENTO(self, tipo_simulacao):
-        #mes_verificacao, ano_verificacao, data_inicio, data_fim = \
+        # mes_verificacao, ano_verificacao, data_inicio, data_fim = \
         #    self._checar_datas_gerar_simulacoes(
         #        self.mes_do_ano, self.ano
         #    )
@@ -3008,8 +3034,10 @@ class HrPayslip(models.Model):
         if self.mes_do_ano == 1:
             ano_verificacao = self.ano - 1
         dias_no_mes = monthrange(ano_verificacao, mes_verificacao)
-        data_inicio = str(ano_verificacao) + "-" + str(mes_verificacao) + "-" + "01"
-        data_fim = str(ano_verificacao) + "-" + str(ano_verificacao) + "-" + str(dias_no_mes[1])
+        data_inicio = str(ano_verificacao) + "-" + str(
+            mes_verificacao) + "-" + "01"
+        data_fim = str(ano_verificacao) + "-" + str(
+            ano_verificacao) + "-" + str(dias_no_mes[1])
         if not tipo_simulacao == "ferias":
             payslip_simulacao = self.env['hr.payslip'].search(
                 [
@@ -3069,6 +3097,7 @@ class HrPayslip(models.Model):
             res['arch'] = etree.tostring(doc)
         return res
 
+    @profile
     def buscar_total_rubrica_payslip(self, codigo):
         """
         Está função é responsável por iterar pelas linhas de rúbricas do
@@ -3086,6 +3115,7 @@ class HrPayslip(models.Model):
 
         return total_rubrica
 
+    @profile
     def buscar_porcentagem_pensao(self):
         """
         Função responsável por verificar nas rubricas específicas se existe
@@ -3095,17 +3125,13 @@ class HrPayslip(models.Model):
         """
         porcentagem_pensao = 0
         for line in self.contract_id.specific_rule_ids:
-            if line.rule_id.code in \
-                    [
-                        'PENSAO_ALIMENTICIA_PORCENTAGEM',
-                        'PENSAO_ALIMENTICIA_PORCENTAGEM_FERIAS',
-                        'PENSAO_ALIMENTICIA_PORCENTAGEM_13'
-                    ]:
+            if line.rule_id.code in CALCULATED_SPECIFC_RULE:
                 porcentagem_pensao = line.specific_amount
                 break
 
         return porcentagem_pensao
 
+    @profile
     def _get_valor_bruto(self, tipo_folha):
         payslip_id = self.search([
             ('tipo_de_folha', '=', tipo_folha),
@@ -3123,6 +3149,7 @@ class HrPayslip(models.Model):
 
         return total_bruto
 
+    @profile
     def get_valor_pensao(self, porcentagem_pensao, locals):
         """
         Função responsável por calcular o valor correto da pensão a partir de
@@ -3162,8 +3189,8 @@ class HrPayslip(models.Model):
             aliquota = faixa_irrf.rate
             deducao_irrf = faixa_irrf.deductable
 
-            pensao_porcentagem_decimal = porcentagem_pensao/100
-            aliquota_porcentagem_decimal = aliquota/100
+            pensao_porcentagem_decimal = porcentagem_pensao / 100
+            aliquota_porcentagem_decimal = aliquota / 100
 
             # Fórmula utilizada para o pagamento de pensão alimentícia
             # utilizando uma porcentagem em cima do valor
@@ -3181,6 +3208,7 @@ class HrPayslip(models.Model):
 
         return pensao, porcentagem_pensao
 
+    @profile
     def get_valor_pensao_adiantamente_decimo_terceiro(self):
         """
 
@@ -3209,7 +3237,3 @@ class HrPayslip(models.Model):
                             valor += line.total
 
         return valor
-
-    def sort_specific_rules(self, applied_specific_rule):
-
-        return applied_specific_rule
